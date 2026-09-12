@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:ui="jakarta.faces.facelets"
+      lang="pt-BR">
+
+<h:head>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <title>
+        <ui:insert name="titulo">Prontus</ui:insert>
+    </title>
+
+    <h:outputStylesheet library="css" name="estilos.css"/>
+
+    <link rel="icon"
+          type="image/png"
+          href="#{resource['images:favicon.png']}"/>
+</h:head>
+
+<h:body>
+    <header class="cabecalho">
+        <div class="container cabecalho__conteudo">
+            <h:link outcome="/index"
+                    styleClass="cabecalho__marca">
+                <h:graphicImage library="images"
+                                name="logo-prontus.png"
+                                alt="Prontus — página inicial"
+                                styleClass="cabecalho__logo"/>
+            </h:link>
+
+            <nav class="menu" aria-label="Menu principal">
+                <h:link outcome="/pacientes/listagem"
+                        value="Cadastro"
+                        styleClass="menu__link"/>
+
+                <h:link outcome="/graficos/index"
+                        value="Gráficos"
+                        styleClass="menu__link"/>
+            </nav>
+        </div>
+    </header>
+
+    <main id="conteudo" class="container conteudo">
+        <ui:insert name="conteudo"/>
+    </main>
+</h:body>
+
+</html>

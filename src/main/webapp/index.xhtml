@@ -1,29 +1,27 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="jakarta.faces.html"
-      xmlns:f="jakarta.faces.core"
-      xmlns:p="http://primefaces.org/ui"
-      lang="pt-BR">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:ui="jakarta.faces.facelets"
+                template="/WEB-INF/templates/template.xhtml">
 
-<h:head>
-    <title>Prontus — Cadastro de pacientes</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-</h:head>
+    <ui:define name="titulo">
+        Prontus — Início
+    </ui:define>
 
-<h:body>
-    <main style="max-width: 900px; margin: 3rem auto; padding: 1rem;">
-        <p:card>
-            <f:facet name="title">
-                Prontus
-            </f:facet>
+    <ui:define name="conteudo">
+        <section class="boas-vindas"
+                 aria-labelledby="titulo-boas-vindas">
 
-            <f:facet name="subtitle">
-                Sistema de cadastro e consulta de pacientes
-            </f:facet>
+            <h:graphicImage library="images"
+                            name="logo-prontus.png"
+                            alt="Prontus"
+                            styleClass="boas-vindas__logo"/>
 
-            <p>Bem-vindo ao Prontus.</p>
-        </p:card>
-    </main>
-</h:body>
+            <h1 id="titulo-boas-vindas"
+                class="boas-vindas__titulo">
+                Bem-vindo ao Prontus
+            </h1>
 
-</html>
+        </section>
+    </ui:define>
+
+</ui:composition>
