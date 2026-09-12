@@ -195,6 +195,13 @@ Após modificar o projeto, execute novamente:
 
 O código é incorporado à imagem durante a construção.
 
+## Licença
+
+Este projeto está licenciado sob a licença MIT.
+Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+As dependências utilizadas mantêm suas respectivas licenças.
+
 ## Estado atual
 
 - Projeto Maven configurado e compilação validada.
