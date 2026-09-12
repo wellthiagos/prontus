@@ -66,15 +66,36 @@ não exigida no enunciado.
 
 ## Testes
 
-Os testes serão implementados junto às funcionalidades correspondentes.
+Os testes unitários utilizam JUnit 5 e são executados pelo
+Maven Surefire, sem necessidade de Docker, WildFly ou banco.
 
-A cobertura planejada inclui:
+Para executar:
 
-- Testes unitários das regras de negócio e dos casos de uso.
-- Testes JUnit do acesso aos dados e do serviço da procedure,
-  conforme solicitado no enunciado.
-- Testes de integração para validar a persistência e as operações
-  de banco no ambiente utilizado.
+    mvn test
+
+Para executar os testes e gerar o WAR:
+
+    mvn clean package
+
+### Cobertura atual
+
+A classe PacienteTest verifica:
+
+- Criação de paciente com dados válidos.
+- Rejeição de nascimento futuro.
+- Aceitação de nascimento na data atual.
+- Rejeição de data de nascimento nula.
+- Rejeição de nome nulo, vazio ou composto apenas por espaços,
+  tabulação ou quebra de linha.
+- Remoção de espaços nas extremidades do nome.
+
+São 10 execuções, incluindo os cenários do teste parametrizado.
+
+Os testes utilizam um Clock fixo para que o resultado não dependa
+da data real de execução.
+
+Testes dos casos de uso, da persistência e do serviço da procedure
+serão adicionados nas etapas correspondentes.
 
 ## Docker e integração contínua
 
@@ -180,7 +201,11 @@ O código é incorporado à imagem durante a construção.
 - Imagem Docker construída com Maven e Java 17.
 - Aplicação executando no WildFly pelo Docker Compose.
 - Página inicial JSF com componente PrimeFaces validada no navegador.
+- Modelo de domínio Paciente com validação dos dados obrigatórios e rejeição de nascimento futuro.
+- DomainException para representar violações das regras de negócio.
+- Testes unitários do domínio: 10 execuções aprovadas.
 
-Cadastro, persistência, procedure, testes, gráficos, relatório
-e integração contínua serão implementados nas próximas etapas.
+Casos de uso de cadastro, persistência, procedure, gráficos,
+relatório e integração contínua serão implementados
+nas próximas etapas.
 
