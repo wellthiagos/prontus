@@ -2,6 +2,7 @@ package br.com.prontus.paciente.infrastructure.persistence;
 
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
+import br.com.prontus.paciente.domain.exception.PacienteNaoEncontradoException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -43,9 +44,7 @@ public class PacienteRepositoryJpa implements PacienteRepository {
             );
 
             if (entidade == null) {
-                throw new IllegalArgumentException(
-                        "Paciente não encontrado para atualização."
-                );
+                throw new PacienteNaoEncontradoException(paciente.getId());
             }
 
             entidade.atualizarDados(paciente);

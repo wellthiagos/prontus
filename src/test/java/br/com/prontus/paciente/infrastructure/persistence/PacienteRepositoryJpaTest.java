@@ -1,6 +1,7 @@
 package br.com.prontus.paciente.infrastructure.persistence;
 
 import br.com.prontus.paciente.domain.Paciente;
+import br.com.prontus.paciente.domain.exception.PacienteNaoEncontradoException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
@@ -243,13 +244,13 @@ class PacienteRepositoryJpaTest {
 
         entityManager.getTransaction().begin();
 
-        IllegalArgumentException excecao = assertThrows(
-                IllegalArgumentException.class,
+        PacienteNaoEncontradoException excecao = assertThrows(
+                PacienteNaoEncontradoException.class,
                 () -> repository.salvar(paciente)
         );
 
         assertEquals(
-                "Paciente não encontrado para atualização.",
+                "Paciente não encontrado para o identificador: 999",
                 excecao.getMessage()
         );
 

@@ -79,23 +79,21 @@ Para executar os testes e gerar o WAR:
 
 ### Cobertura atual
 
-São 29 execuções de testes:
+São 73 execuções de testes:
 
-- 17 de domínio: dados obrigatórios, datas de nascimento,
-  identidade, normalização e limite do nome.
-- 12 de integração: inclusão, busca, paginação, contagem,
-  atualização, datas automáticas e rejeição de parâmetros inválidos.
+- 17 de domínio.
+- 44 dos casos de uso, com Mockito.
+- 12 de integração da persistência, com Hibernate e H2.
 
-Os testes de integração utilizam Hibernate e H2 em memória,
-no modo Oracle, sem acessar o banco da aplicação.
+Os testes dos casos de uso verificam cadastro, atualização, busca,
+paginação, rejeição de dados inválidos e propagação de falhas.
 
-As transações são controladas explicitamente pelos testes.
-A integração com as transações JTA do WildFly não é exercitada
-por esses testes.
+Mockito simula o contrato PacienteRepository nesses testes.
+O funcionamento real da persistência é verificado separadamente
+pelos testes de integração.
 
-O esquema de teste é gerado pelas anotações JPA.
-O script SQL do ambiente Docker é validado separadamente
-durante a inicialização da aplicação com Hibernate validate.
+Os testes executados fora do WildFly não validam os interceptadores
+CDI e o gerenciamento de transações JTA.
 
 ## Docker e integração contínua
 
@@ -235,17 +233,36 @@ No H2 em modo Oracle, DATE é interpretado como TIMESTAMP(0).
 Por isso, DATA_NASCIMENTO utiliza esse tipo explicitamente
 no mapeamento e no SQL, mantendo LocalDate no Java.
 
+## Casos de uso
+
+A camada application coordena as operações do sistema:
+
+- CadastrarPaciente: valida os dados pelo domínio e solicita a inclusão.
+- AtualizarPaciente: valida a identidade e os dados e solicita a edição.
+- BuscarPaciente: retorna o paciente ou lança PacienteNaoEncontradoException.
+- ListarPacientes: retorna uma página de pacientes e a contagem total.
+
+Os casos de uso dependem da interface PacienteRepository,
+sem conhecer a implementação JPA.
+
+PaginaPacientes representa o resultado paginado e contém uma
+lista não modificável e o total de registros.
+
+A listagem e a contagem são consultas separadas e podem refletir
+momentos diferentes quando há alterações concorrentes.
+
 ## Estado atual
 
-- Projeto Maven configurado e compilação validada.
-- Imagem Docker construída com Maven e Java 17.
-- Aplicação executando no WildFly pelo Docker Compose.
-- Página inicial JSF com componente PrimeFaces validada no navegador.
-- Modelo de domínio Paciente com validação dos dados obrigatórios e rejeição de nascimento futuro.
-- DomainException para representar violações das regras de negócio.
-- Testes unitários do domínio: 10 execuções aprovadas.
+### Implementado
 
-Casos de uso de cadastro, persistência, procedure, gráficos,
-relatório e integração contínua serão implementados
-nas próximas etapas.
+- Projeto Maven com Java 17, Jakarta EE 10 e PrimeFaces 14.
+- Aplicação executando no WildFly pelo Docker Compose.
+- Página inicial JSF com componente PrimeFaces.
+- Modelo de domínio Paciente com regras de validação.
+- Persistência JPA com H2 em modo Oracle e volume Docker.
+- Preenchimento automático das datas de cadastro e atualização.
+- Casos de uso para cadastrar, atualizar, buscar e listar pacientes.
+- Tratamento específico de paciente não encontrado.
+- Testes de domínio, casos de uso e integração da persistência.
+- Licença MIT.
 
