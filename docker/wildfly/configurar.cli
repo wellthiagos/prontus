@@ -1,0 +1,5 @@
+embed-server --server-config=standalone.xml --std-out=echo
+
+/subsystem=datasources/data-source=ProntusDS:add(jndi-name="java:jboss/datasources/ProntusDS",driver-name="h2",connection-url="jdbc:h2:file:/opt/jboss/dados/prontus;MODE=Oracle;DEFAULT_NULL_ORDERING=HIGH;INIT=RUNSCRIPT FROM '/opt/jboss/scripts/init.sql'",user-name="sa",password="sa",jta=true,enabled=true,min-pool-size=1,max-pool-size=10)
+
+stop-embedded-server

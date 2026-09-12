@@ -79,23 +79,23 @@ Para executar os testes e gerar o WAR:
 
 ### Cobertura atual
 
-A classe PacienteTest verifica:
+São 29 execuções de testes:
 
-- Criação de paciente com dados válidos.
-- Rejeição de nascimento futuro.
-- Aceitação de nascimento na data atual.
-- Rejeição de data de nascimento nula.
-- Rejeição de nome nulo, vazio ou composto apenas por espaços,
-  tabulação ou quebra de linha.
-- Remoção de espaços nas extremidades do nome.
+- 17 de domínio: dados obrigatórios, datas de nascimento,
+  identidade, normalização e limite do nome.
+- 12 de integração: inclusão, busca, paginação, contagem,
+  atualização, datas automáticas e rejeição de parâmetros inválidos.
 
-São 10 execuções, incluindo os cenários do teste parametrizado.
+Os testes de integração utilizam Hibernate e H2 em memória,
+no modo Oracle, sem acessar o banco da aplicação.
 
-Os testes utilizam um Clock fixo para que o resultado não dependa
-da data real de execução.
+As transações são controladas explicitamente pelos testes.
+A integração com as transações JTA do WildFly não é exercitada
+por esses testes.
 
-Testes dos casos de uso, da persistência e do serviço da procedure
-serão adicionados nas etapas correspondentes.
+O esquema de teste é gerado pelas anotações JPA.
+O script SQL do ambiente Docker é validado separadamente
+durante a inicialização da aplicação com Hibernate validate.
 
 ## Docker e integração contínua
 
@@ -201,6 +201,39 @@ Este projeto está licenciado sob a licença MIT.
 Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 As dependências utilizadas mantêm suas respectivas licenças.
+
+## Persistência
+
+A aplicação utiliza JPA com Hibernate, com a unidade de persistência
+prontusPU e o datasource ProntusDS gerenciado pelo WildFly.
+
+No ambiente local, o H2 funciona em modo Oracle e armazena os dados
+no volume Docker prontus-dados.
+
+O script docker/h2/init.sql cria a tabela PACIENTE e a sequência
+SEQ_PACIENTE quando ainda não existem. Ele não realiza migrações
+de estruturas existentes.
+
+### Convenções
+
+- Tabelas no singular e em maiúsculas.
+- Colunas em maiúsculas, com palavras separadas por underscore.
+- Identificadores gerados por sequência.
+
+### Regras de armazenamento
+
+- Nome completo obrigatório, com até 255 caracteres após
+  a remoção de espaços nas extremidades.
+- Data de nascimento obrigatória e não futura.
+- Data de cadastro preenchida na inclusão e preservada nas edições.
+- Data de atualização preenchida na inclusão e renovada
+  quando o JPA atualiza o registro.
+
+O limite de 255 caracteres é uma decisão da implementação.
+
+No H2 em modo Oracle, DATE é interpretado como TIMESTAMP(0).
+Por isso, DATA_NASCIMENTO utiliza esse tipo explicitamente
+no mapeamento e no SQL, mantendo LocalDate no Java.
 
 ## Estado atual
 

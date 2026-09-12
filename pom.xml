@@ -19,6 +19,9 @@
         <jakartaee.version>10.0.0</jakartaee.version>
         <primefaces.version>14.0.12</primefaces.version>
         <junit.version>5.11.4</junit.version>
+        <hibernate.version>6.6.19.Final</hibernate.version>
+        <h2.version>2.2.224</h2.version>
+        <yasson.version>3.0.4</yasson.version>
     </properties>
 
     <dependencies>
@@ -40,6 +43,27 @@
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>${hibernate.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>${yasson.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
