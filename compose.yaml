@@ -1,0 +1,8 @@
+services:
+  prontus:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: prontus:dev
+    ports:
+      - "127.0.0.1:8080:8080"

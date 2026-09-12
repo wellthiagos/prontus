@@ -135,9 +135,52 @@ dependerá da configuração do servidor, prevista na próxima etapa.
 Cada etapa será validada antes de um commit, mantendo um
 histórico da evolução da implementação.
 
+## Execução local com Docker
+
+### Pré-requisitos
+
+- Docker com suporte a contêineres Linux.
+- Docker Compose.
+
+Não é necessário instalar Java ou Maven na máquina para executar
+por Docker: a compilação ocorre dentro da imagem de build.
+
+### Iniciar a aplicação
+
+Na raiz do projeto, execute:
+
+    docker compose up --build -d
+
+Acesse:
+
+    http://localhost:8080/prontus/
+
+O ambiente utiliza WildFly 37.0.0.Final com Java 17,
+compatível com Jakarta EE 10.
+
+### Consultar os logs
+
+    docker compose logs -f prontus
+
+### Encerrar o ambiente
+
+    docker compose down
+
+### Aplicar alterações no código
+
+Após modificar o projeto, execute novamente:
+
+    docker compose up --build -d
+
+O código é incorporado à imagem durante a construção.
+
 ## Estado atual
 
-A configuração Maven foi validada com BUILD SUCCESS.
+- Projeto Maven configurado e compilação validada.
+- Imagem Docker construída com Maven e Java 17.
+- Aplicação executando no WildFly pelo Docker Compose.
+- Página inicial JSF com componente PrimeFaces validada no navegador.
 
-As funcionalidades, os testes e o ambiente Docker ainda serão
-implementados nas etapas seguintes.
+Cadastro, persistência, procedure, testes, gráficos, relatório
+e integração contínua serão implementados nas próximas etapas.
+
