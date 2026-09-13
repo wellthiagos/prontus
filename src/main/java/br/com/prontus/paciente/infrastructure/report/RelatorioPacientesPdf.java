@@ -78,7 +78,7 @@ public class RelatorioPacientesPdf {
                 Map<String, Object> linha = new HashMap<>();
 
                 linha.put("codigo", paciente.getId().toString());
-                linha.put("nome", paciente.getNomeCompleto());
+                linha.put("nome", paciente.getNomeCompleto().toUpperCase(PORTUGUES));
                 linha.put(
                         "nascimento",
                         DATA.format(paciente.getDataNascimento())
