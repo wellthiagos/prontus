@@ -1,14 +1,18 @@
 package br.com.prontus.paciente.infrastructure.persistence;
 
+import br.com.prontus.paciente.domain.FiltroPacientes;
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
 import br.com.prontus.paciente.domain.exception.PacienteNaoEncontradoException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -74,6 +78,17 @@ public class PacienteRepositoryJpa implements PacienteRepository {
 
     @Override
     public List<Paciente> listar(int primeiraPosicao, int quantidade) {
+        return listar(FiltroPacientes.semFiltros(), primeiraPosicao, quantidade);
+    }
+
+    @Override
+    public List<Paciente> listar(
+            FiltroPacientes filtro,
+            int primeiraPosicao,
+            int quantidade
+    ) {
+        Objects.requireNonNull(filtro, "O filtro é obrigatório.");
+
         if (primeiraPosicao < 0) {
             throw new IllegalArgumentException(
                     "A primeira posição não pode ser negativa."
@@ -86,10 +101,17 @@ public class PacienteRepositoryJpa implements PacienteRepository {
             );
         }
 
-        return entityManager.createQuery(
-                        "SELECT p FROM PacienteEntity p ORDER BY p.id",
-                        PacienteEntity.class
-                )
+        String jpql = "SELECT p FROM PacienteEntity p"
+                + montarCondicoes(filtro)
+                + " ORDER BY p.id";
+
+        TypedQuery<PacienteEntity> consulta = entityManager.createQuery(
+                jpql,
+                PacienteEntity.class
+        );
+        aplicarParametros(consulta, filtro);
+
+        return consulta
                 .setFirstResult(primeiraPosicao)
                 .setMaxResults(quantidade)
                 .getResultList()
@@ -100,10 +122,72 @@ public class PacienteRepositoryJpa implements PacienteRepository {
 
     @Override
     public long contar() {
-        return entityManager.createQuery(
-                        "SELECT COUNT(p) FROM PacienteEntity p",
-                        Long.class
-                )
-                .getSingleResult();
+        return contar(FiltroPacientes.semFiltros());
+    }
+
+    @Override
+    public long contar(FiltroPacientes filtro) {
+        Objects.requireNonNull(filtro, "O filtro é obrigatório.");
+
+        String jpql = "SELECT COUNT(p) FROM PacienteEntity p"
+                + montarCondicoes(filtro);
+
+        TypedQuery<Long> consulta = entityManager.createQuery(jpql, Long.class);
+        aplicarParametros(consulta, filtro);
+
+        return consulta.getSingleResult();
+    }
+
+    private String montarCondicoes(FiltroPacientes filtro) {
+        List<String> condicoes = new ArrayList<>();
+
+        if (filtro.possuiNome()) {
+            condicoes.add("LOWER(p.nomeCompleto) LIKE :nome ESCAPE '!'");
+        }
+
+        if (filtro.possuiDataNascimentoIni()) {
+            condicoes.add("p.dataNascimento >= :dataNascimentoIni");
+        }
+
+        if (filtro.possuiDataNascimentoFim()) {
+            condicoes.add("p.dataNascimento <= :dataNascimentoFim");
+        }
+
+        return condicoes.isEmpty()
+                ? ""
+                : " WHERE " + String.join(" AND ", condicoes);
+    }
+
+    private void aplicarParametros(
+            TypedQuery<?> consulta,
+            FiltroPacientes filtro
+    ) {
+        if (filtro.possuiNome()) {
+            consulta.setParameter(
+                    "nome",
+                    "%" + escaparNome(filtro.nome()) + "%"
+            );
+        }
+
+        if (filtro.possuiDataNascimentoIni()) {
+            consulta.setParameter(
+                    "dataNascimentoIni",
+                    filtro.dataNascimentoIni()
+            );
+        }
+
+        if (filtro.possuiDataNascimentoFim()) {
+            consulta.setParameter(
+                    "dataNascimentoFim",
+                    filtro.dataNascimentoFim()
+            );
+        }
+    }
+
+    private String escaparNome(String nome) {
+        return nome.toLowerCase(Locale.ROOT)
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
     }
 }

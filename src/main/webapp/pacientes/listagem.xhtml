@@ -1,4 +1,6 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
                 xmlns:ui="jakarta.faces.facelets"
                 template="/WEB-INF/templates/template.xhtml">
 
@@ -6,13 +8,174 @@
         Prontus — Pacientes
     </ui:define>
 
+    <ui:define name="metadata">
+        <f:metadata>
+            <f:viewParam name="nome"
+                         value="#{pacienteConsultaBean.nome}"/>
+
+            <f:viewParam name="dataNascimentoIni"
+                         value="#{pacienteConsultaBean.dataNascimentoIni}"
+                         converterMessage="Informe uma data de nascimento inicial válida.">
+                <f:convertDateTime type="localDate"
+                                   pattern="yyyy-MM-dd"/>
+            </f:viewParam>
+
+            <f:viewParam name="dataNascimentoFim"
+                         value="#{pacienteConsultaBean.dataNascimentoFim}"
+                         converterMessage="Informe uma data de nascimento final válida.">
+                <f:convertDateTime type="localDate"
+                                   pattern="yyyy-MM-dd"/>
+            </f:viewParam>
+
+            <f:viewParam name="primeiraPosicao"
+                         value="#{pacienteConsultaBean.primeiraPosicao}"
+                         converterMessage="A posição da página deve ser um número inteiro."
+                         validatorMessage="A posição da página deve estar entre 0 e 2147483637.">
+                <f:validateLongRange minimum="0"
+                                     maximum="2147483637"/>
+            </f:viewParam>
+
+            <f:viewAction action="#{pacienteConsultaBean.carregar}"/>
+        </f:metadata>
+    </ui:define>
+
     <ui:define name="conteudo">
         <section aria-labelledby="titulo-pacientes">
             <h1 id="titulo-pacientes">Pacientes</h1>
 
-            <p>
-                Consulte e organize os cadastros de pacientes.
+            <p class="pagina__descricao">
+                Consulte pelo nome e pelo intervalo de nascimento.
             </p>
+
+            <h:messages styleClass="mensagens"
+                        errorClass="mensagens__erro"
+                        showSummary="true"
+                        showDetail="false"/>
+
+            <form method="get"
+                  action="#{request.contextPath}/pacientes/listagem.xhtml"
+                  class="filtros">
+
+                <div class="campo">
+                    <label for="nome">Nome</label>
+                    <input type="search"
+                           id="nome"
+                           name="nome"
+                           value="#{param.nome}"
+                           placeholder="Digite parte do nome"/>
+                </div>
+
+                <div class="campo">
+                    <label for="dataNascimentoIni">
+                        Nascimento inicial
+                    </label>
+                    <input type="date"
+                           id="dataNascimentoIni"
+                           name="dataNascimentoIni"
+                           min="1900-01-01"
+                           max="#{pacienteConsultaBean.dataMaximaNascimento}"
+                           value="#{param.dataNascimentoIni}"/>
+                </div>
+
+                <div class="campo">
+                    <label for="dataNascimentoFim">
+                        Nascimento final
+                    </label>
+                    <input type="date"
+                           id="dataNascimentoFim"
+                           name="dataNascimentoFim"
+                           min="1900-01-01"
+                           max="#{pacienteConsultaBean.dataMaximaNascimento}"
+                           value="#{param.dataNascimentoFim}"/>
+                </div>
+
+                <div class="filtros__acoes">
+                    <button type="submit" class="botao">
+                        Consultar
+                    </button>
+
+                    <h:link outcome="/pacientes/listagem"
+                            includeViewParams="false"
+                            value="Limpar"
+                            styleClass="botao botao--secundario"/>
+                </div>
+            </form>
+
+            <h:panelGroup layout="block"
+                          styleClass="resultado"
+                          rendered="#{not facesContext.validationFailed}">
+
+                <p class="resultado__total" role="status">
+                    Total de pacientes:
+                    <h:outputText value="#{pacienteConsultaBean.totalRegistros}"/>
+                </p>
+
+                <h:panelGroup layout="block"
+                              styleClass="estado-vazio"
+                              rendered="#{empty pacienteConsultaBean.pacientes}">
+                    Nenhum registro encontrado.
+                </h:panelGroup>
+
+                <h:panelGroup layout="block"
+                              styleClass="tabela-container"
+                              rendered="#{not empty pacienteConsultaBean.pacientes}">
+
+                    <h:dataTable value="#{pacienteConsultaBean.pacientes}"
+                                 var="paciente"
+                                 styleClass="tabela">
+                        <f:facet name="caption">
+                            Pacientes encontrados
+                        </f:facet>
+
+                        <h:column>
+                            <f:facet name="header">Código</f:facet>
+                            <h:outputText value="#{paciente.id}"/>
+                        </h:column>
+
+                        <h:column>
+                            <f:facet name="header">Nome completo</f:facet>
+                            <h:outputText value="#{paciente.nomeCompleto}"/>
+                        </h:column>
+
+                        <h:column>
+                            <f:facet name="header">
+                                Data de nascimento
+                            </f:facet>
+                            <h:outputText value="#{paciente.dataNascimento}">
+                                <f:convertDateTime type="localDate"
+                                                   pattern="dd/MM/yyyy"/>
+                            </h:outputText>
+                        </h:column>
+                    </h:dataTable>
+                </h:panelGroup>
+
+                <nav class="paginacao" aria-label="Paginação de pacientes">
+                    <h:link outcome="/pacientes/listagem"
+                            includeViewParams="true"
+                            value="Anterior"
+                            styleClass="botao botao--secundario"
+                            rendered="#{pacienteConsultaBean.possuiPaginaAnterior}">
+                        <f:param name="primeiraPosicao"
+                                 value="#{pacienteConsultaBean.posicaoAnterior}"/>
+                    </h:link>
+
+                    <h:panelGroup rendered="#{not empty pacienteConsultaBean.pacientes}">
+                        Página
+                        <h:outputText value="#{pacienteConsultaBean.paginaAtual}"/>
+                        de
+                        <h:outputText value="#{pacienteConsultaBean.totalPaginas}"/>
+                    </h:panelGroup>
+
+                    <h:link outcome="/pacientes/listagem"
+                            includeViewParams="true"
+                            value="Próxima"
+                            styleClass="botao botao--secundario"
+                            rendered="#{pacienteConsultaBean.possuiProximaPagina}">
+                        <f:param name="primeiraPosicao"
+                                 value="#{pacienteConsultaBean.posicaoProxima}"/>
+                    </h:link>
+                </nav>
+            </h:panelGroup>
         </section>
     </ui:define>
 

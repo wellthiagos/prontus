@@ -1,5 +1,6 @@
 package br.com.prontus.paciente.infrastructure.persistence;
 
+import br.com.prontus.paciente.domain.FiltroPacientes;
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.exception.PacienteNaoEncontradoException;
 import jakarta.persistence.EntityManager;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -287,6 +289,187 @@ class PacienteRepositoryJpaTest {
         assertEquals(
                 "O identificador deve ser positivo.",
                 excecao.getMessage()
+        );
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "sILv, , 'Maria Silva|Ana Silva'",
+            "'  sILv  ', , 'Maria Silva|Ana Silva'",
+            ", 1990-05-20, 'Maria Silva|Bruno Lima'",
+            "silva, 1990-05-20, 'Maria Silva'",
+            "souza, 1990-05-20, ''",
+            "inexistente, , ''",
+            ", 1970-01-01, ''",
+            ", , 'Maria Silva|Ana Silva|Bruno Lima|Maria Souza'",
+            "'   ', , 'Maria Silva|Ana Silva|Bruno Lima|Maria Souza'"
+    })
+    void testListarEContarComFiltros(
+            String nome, String data, String nomesEsperados) {
+        salvarCenarioDeFiltros();
+        LocalDate nascimento = data == null
+                ? null
+                : LocalDate.parse(data);
+
+        FiltroPacientes filtro = new FiltroPacientes(
+                nome,
+                nascimento,
+                nascimento
+        );
+        List<String> esperados = nomesEsperados.isEmpty()
+                ? List.of()
+                : List.of(nomesEsperados.split("\\|"));
+
+        var pacientes = repository.listar(filtro, 0, 10);
+
+        assertEquals(
+                esperados,
+                pacientes.stream().map(Paciente::getNomeCompleto).toList()
+        );
+        assertEquals((long) esperados.size(), repository.contar(filtro));
+    }
+
+    @Test
+    void testPaginarSomentePacientesFiltradosMantendoTotal() {
+        salvarCenarioDeFiltros();
+        FiltroPacientes filtro = new FiltroPacientes("maria", null, null);
+
+        var primeiraPagina = repository.listar(filtro, 0, 1);
+        var segundaPagina = repository.listar(filtro, 1, 1);
+
+        assertEquals(List.of("Maria Silva"), primeiraPagina.stream()
+                .map(Paciente::getNomeCompleto).toList());
+        assertEquals(List.of("Maria Souza"), segundaPagina.stream()
+                .map(Paciente::getNomeCompleto).toList());
+        assertTrue(repository.listar(filtro, 2, 1).isEmpty());
+        assertEquals(2L, repository.contar(filtro));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"%", "_", "!", "!%_", "' OR '1'='1"})
+    void testBuscarCaracteresEspeciaisComoTextoLiteral(String trecho) {
+        LocalDate nascimento = LocalDate.of(1990, 5, 20);
+        String nomeEsperado = "Ana " + trecho + " Silva";
+        entityManager.getTransaction().begin();
+        repository.salvar(new Paciente(nomeEsperado, nascimento));
+        repository.salvar(new Paciente("Ana comum Silva", nascimento));
+        repository.salvar(new Paciente("Bruno Lima", nascimento));
+        entityManager.getTransaction().commit();
+        entityManager.clear();
+        FiltroPacientes filtro = new FiltroPacientes(trecho, null, null);
+
+        assertEquals(List.of(nomeEsperado), repository.listar(filtro, 0, 10)
+                .stream().map(Paciente::getNomeCompleto).toList());
+        assertEquals(1L, repository.contar(filtro));
+    }
+
+    @Test
+    void testRejeitarFiltroNulo() {
+        assertThrows(NullPointerException.class,
+                () -> repository.listar(null, 0, 10));
+        assertThrows(NullPointerException.class,
+                () -> repository.contar(null));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"-1, 10", "0, 0", "0, -1"})
+    void testRejeitarPaginacaoInvalidaNaConsultaFiltrada(
+            int primeiraPosicao, int quantidade) {
+        FiltroPacientes filtro = new FiltroPacientes("Maria", null, null);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> repository.listar(filtro, primeiraPosicao, quantidade));
+    }
+
+    private void salvarCenarioDeFiltros() {
+        LocalDate primeiraData = LocalDate.of(1990, 5, 20);
+        LocalDate segundaData = LocalDate.of(1990, 5, 21);
+        entityManager.getTransaction().begin();
+        repository.salvar(new Paciente("Maria Silva", primeiraData));
+        repository.salvar(new Paciente("Ana Silva", segundaData));
+        repository.salvar(new Paciente("Bruno Lima", primeiraData));
+        repository.salvar(new Paciente("Maria Souza", segundaData));
+        entityManager.getTransaction().commit();
+        entityManager.clear();
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            ", 1990-05-20, 1990-05-22, 'Maria Inicio|Ana Meio|Maria Fim'",
+            ", 1990-05-21, , 'Ana Meio|Maria Fim|Maria Depois'",
+            ", , 1990-05-21, 'Maria Antes|Maria Inicio|Ana Meio'",
+            ", 1990-05-21, 1990-05-21, 'Ana Meio'",
+            "mArIa, 1990-05-20, 1990-05-22, 'Maria Inicio|Maria Fim'",
+            ", 1990-05-24, 1990-05-25, ''"
+    })
+    void testConsultarIntervaloDeNascimentoComLimitesInclusivos(
+            String nome,
+            String inicio,
+            String fim,
+            String nomesEsperados
+    ) {
+        entityManager.getTransaction().begin();
+
+        repository.salvar(new Paciente(
+                "Maria Antes",
+                LocalDate.of(1990, 5, 19)
+        ));
+        repository.salvar(new Paciente(
+                "Maria Inicio",
+                LocalDate.of(1990, 5, 20)
+        ));
+        repository.salvar(new Paciente(
+                "Ana Meio",
+                LocalDate.of(1990, 5, 21)
+        ));
+        repository.salvar(new Paciente(
+                "Maria Fim",
+                LocalDate.of(1990, 5, 22)
+        ));
+        repository.salvar(new Paciente(
+                "Maria Depois",
+                LocalDate.of(1990, 5, 23)
+        ));
+
+        entityManager.getTransaction().commit();
+        entityManager.clear();
+
+        FiltroPacientes filtro = new FiltroPacientes(
+                nome,
+                inicio == null ? null : LocalDate.parse(inicio),
+                fim == null ? null : LocalDate.parse(fim)
+        );
+
+        List<String> esperados = nomesEsperados.isEmpty()
+                ? List.of()
+                : List.of(nomesEsperados.split("\\|"));
+
+        var pacientes = repository.listar(filtro, 0, 10);
+
+        assertEquals(
+                esperados,
+                pacientes.stream()
+                        .map(Paciente::getNomeCompleto)
+                        .toList()
+        );
+        assertEquals(
+                (long) esperados.size(),
+                repository.contar(filtro)
+        );
+
+        for (int posicao = 0; posicao < esperados.size(); posicao++) {
+            var pagina = repository.listar(filtro, posicao, 1);
+
+            assertEquals(
+                    List.of(esperados.get(posicao)),
+                    pagina.stream()
+                            .map(Paciente::getNomeCompleto)
+                            .toList()
+            );
+        }
+
+        assertTrue(
+                repository.listar(filtro, esperados.size(), 1).isEmpty()
         );
     }
 }

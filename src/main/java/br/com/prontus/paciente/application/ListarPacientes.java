@@ -1,5 +1,6 @@
 package br.com.prontus.paciente.application;
 
+import br.com.prontus.paciente.domain.FiltroPacientes;
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
 import br.com.prontus.paciente.domain.exception.DomainException;
@@ -22,7 +23,43 @@ public class ListarPacientes {
         );
     }
 
-    public PaginaPacientes executar(int primeiraPosicao, int quantidade) {
+    public PaginaPacientes executar(
+            int primeiraPosicao,
+            int quantidade
+    ) {
+        validarPaginacao(primeiraPosicao, quantidade);
+
+        List<Paciente> pacientes =
+                repository.listar(primeiraPosicao, quantidade);
+
+        long totalRegistros = repository.contar();
+
+        return new PaginaPacientes(pacientes, totalRegistros);
+    }
+
+    public PaginaPacientes executar(
+            FiltroPacientes filtro,
+            int primeiraPosicao,
+            int quantidade
+    ) {
+        Objects.requireNonNull(filtro, "O filtro é obrigatório.");
+        validarPaginacao(primeiraPosicao, quantidade);
+
+        List<Paciente> pacientes = repository.listar(
+                filtro,
+                primeiraPosicao,
+                quantidade
+        );
+
+        long totalRegistros = repository.contar(filtro);
+
+        return new PaginaPacientes(pacientes, totalRegistros);
+    }
+
+    private void validarPaginacao(
+            int primeiraPosicao,
+            int quantidade
+    ) {
         if (primeiraPosicao < 0) {
             throw new DomainException(
                     "A primeira posição não pode ser negativa."
@@ -34,12 +71,5 @@ public class ListarPacientes {
                     "A quantidade deve ser positiva."
             );
         }
-
-        List<Paciente> pacientes =
-                repository.listar(primeiraPosicao, quantidade);
-
-        long totalRegistros = repository.contar();
-
-        return new PaginaPacientes(pacientes, totalRegistros);
     }
 }

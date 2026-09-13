@@ -10,5 +10,9 @@ public interface PacienteRepository {
 
     List<Paciente> listar(int primeiraPosicao, int quantidade);
 
+    List<Paciente> listar(FiltroPacientes filtro, int primeiraPosicao, int quantidade);
+
     long contar();
+
+    long contar(FiltroPacientes filtro);
 }
