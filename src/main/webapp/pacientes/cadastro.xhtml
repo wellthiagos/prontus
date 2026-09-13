@@ -1,0 +1,115 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:pt="jakarta.faces.passthrough"
+                xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/templates/template.xhtml">
+
+    <ui:define name="titulo">
+        Prontus — Novo paciente
+    </ui:define>
+
+    <ui:define name="conteudo">
+        <section aria-labelledby="titulo-cadastro">
+            <h1 id="titulo-cadastro">Novo registro</h1>
+
+            <p class="pagina__descricao">
+                Preencha os dados abaixo para cadastrar um paciente.
+            </p>
+
+            <h:form id="cadastro" styleClass="formulario-cadastro">
+
+                <h:messages globalOnly="true"
+                            styleClass="mensagens"
+                            showSummary="true"
+                            showDetail="false"
+                            errorClass="mensagens__erro"
+                            infoClass="mensagens__sucesso"/>
+
+                <div class="campo">
+                    <h:outputLabel for="nomeCompleto"
+                                   value="Nome *"/>
+
+                    <h:inputText id="nomeCompleto"
+                                 value="#{pacienteCadastroBean.formulario.nomeCompleto}"
+                                 required="true"
+                                 requiredMessage="O nome completo é obrigatório."
+                                 maxlength="255"
+                                 pt:autocomplete="name"
+                                 pt:aria-describedby="cadastro:nomeErro">
+                        <f:validateBean/>
+                    </h:inputText>
+
+                    <h:message id="nomeErro"
+                               for="nomeCompleto"
+                               styleClass="campo__erro"/>
+                </div>
+
+                <div class="campo">
+                    <h:outputLabel for="dataNascimento"
+                                   value="Data de Nascimento *"/>
+
+                    <h:inputText id="dataNascimento"
+                                 value="#{pacienteCadastroBean.formulario.dataNascimento}"
+                                 required="true"
+                                 requiredMessage="A data de nascimento é obrigatória."
+                                 converterMessage="Informe uma data de nascimento válida."
+                                 pt:type="date"
+                                 pt:min="1900-01-01"
+                                 pt:max="#{pacienteCadastroBean.dataMaximaNascimento}"
+                                 pt:autocomplete="bday"
+                                 pt:aria-describedby="cadastro:dataErro">
+                        <f:convertDateTime type="localDate"
+                                           pattern="yyyy-MM-dd"/>
+                        <f:validateBean/>
+                    </h:inputText>
+
+                    <h:message id="dataErro"
+                               for="dataNascimento"
+                               styleClass="campo__erro"/>
+                </div>
+
+                <div class="formulario-cadastro__acoes">
+                    <p:commandButton id="salvar"
+                                     widgetVar="botaoSalvar"
+                                     value="Salvar"
+                                     action="#{pacienteCadastroBean.salvar}"
+                                     process="@form"
+                                     update="@form"
+                                     styleClass="botao"
+                                     oncomplete="if (args &amp;&amp; args.cadastroEfetuado) {
+                                                    PF('botaoSalvar').disable();
+                                                    PF('cadastroSucesso').show();
+                                                 }"
+                    />
+
+                    <h:link outcome="/pacientes/listagem"
+                            value="Cancelar"
+                            styleClass="botao botao--secundario"/>
+                </div>
+            </h:form>
+            <p:dialog id="dialogCadastroSucesso"
+                      widgetVar="cadastroSucesso"
+                      header="Cadastro concluído"
+                      modal="true"
+                      closable="false"
+                      closeOnEscape="false"
+                      draggable="false"
+                      resizable="false"
+                      responsive="true"
+                      width="420">
+
+                <p>Cadastro efetuado com sucesso</p>
+
+                <div class="dialogo__acoes">
+                    <h:button outcome="/pacientes/listagem"
+                              includeViewParams="false"
+                              value="OK"
+                              styleClass="botao"/>
+                </div>
+            </p:dialog>
+        </section>
+    </ui:define>
+
+</ui:composition>

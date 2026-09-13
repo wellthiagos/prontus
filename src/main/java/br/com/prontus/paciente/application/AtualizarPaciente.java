@@ -2,17 +2,21 @@ package br.com.prontus.paciente.application;
 
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
-@Dependent
+@ApplicationScoped
 public class AtualizarPaciente {
 
     private final PacienteRepository repository;
+
+    protected AtualizarPaciente() {
+        this.repository = null;
+    }
 
     @Inject
     public AtualizarPaciente(PacienteRepository repository) {

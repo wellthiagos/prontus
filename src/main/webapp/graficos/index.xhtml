@@ -1,20 +1,50 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
                 xmlns:ui="jakarta.faces.facelets"
                 template="/WEB-INF/templates/template.xhtml">
+    <ui:define name="titulo">Prontus — Gráficos</ui:define>
+<ui:define name="metadata">
+        <f:metadata>
+            
 
-    <ui:define name="titulo">
-        Prontus — Gráficos
+            
+
+            
+
+            <f:viewAction action="#{pacienteGraficosBean.carregar}"/>
+        </f:metadata>
     </ui:define>
-
     <ui:define name="conteudo">
-        <section aria-labelledby="titulo-graficos">
-            <h1 id="titulo-graficos">Gráficos</h1>
+        <section class="listagem-pacientes graficos-pacientes" aria-labelledby="titulo-graficos">
+            <div class="pagina__cabecalho"><h1 id="titulo-graficos">Perfil etário</h1></div>
+            <p class="pagina__descricao">Distribuição por faixa etária de todos os pacientes cadastrados.</p>
+            <h:messages styleClass="mensagens" errorClass="mensagens__erro" showDetail="false"/>
 
-            <p>
-                Os indicadores de pacientes estarão disponíveis
-                em breve.
-            </p>
+            <h:panelGroup layout="block" rendered="#{pacienteGraficosBean.carregado}">
+                <div class="indicadores">
+                    <div class="indicador"><span>Total de registros</span><strong>#{pacienteGraficosBean.total}</strong></div>
+                    <div class="indicador"><span>Idade média</span><strong>#{pacienteGraficosBean.media}</strong></div>
+                    <div class="indicador"><span>Idade mediana</span><strong>#{pacienteGraficosBean.mediana}</strong></div>
+                </div>
+                <h:panelGroup layout="block" styleClass="grafico-etario" rendered="#{pacienteGraficosBean.total gt 0}">
+                    <h2>Registros por faixa etária</h2>
+                    <p class="pagina__descricao">Quantidade de registros e participação no total.</p>
+                    <ul class="grafico-faixas" aria-label="Distribuição de registros por faixa etária">
+                        <ui:repeat value="#{pacienteGraficosBean.faixas}" var="faixa">
+                            <li class="grafico-faixa">
+                                <span class="grafico-faixa__nome">#{faixa.nome}</span>
+                                <span class="grafico-faixa__trilho" aria-hidden="true"><span class="grafico-faixa__barra" style="width: #{faixa.largura}%"></span></span>
+                                <span class="grafico-faixa__valor"><strong>#{faixa.quantidade}</strong> <span>(#{faixa.percentual})</span></span>
+                            </li>
+                        </ui:repeat>
+                    </ul>
+                    <p class="grafico-nota">Idades completas em #{pacienteGraficosBean.dataReferencia}. A mediana é a idade central da distribuição.</p>
+                </h:panelGroup>
+                <h:panelGroup layout="block" styleClass="grafico-etario" rendered="#{pacienteGraficosBean.total eq 0}">
+                    <p>Nenhum paciente cadastrado.</p>
+                </h:panelGroup>
+            </h:panelGroup>
         </section>
     </ui:define>
-
 </ui:composition>

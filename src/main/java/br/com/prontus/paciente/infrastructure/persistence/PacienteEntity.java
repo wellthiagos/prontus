@@ -50,7 +50,7 @@ public class PacienteEntity {
     }
 
     public PacienteEntity(Paciente paciente) {
-        Objects.requireNonNull(paciente, "O paciente é obrigatório.");
+        Objects.requireNonNull(paciente, "O registro é obrigatório.");
 
         this.nomeCompleto = paciente.getNomeCompleto();
         this.dataNascimento = paciente.getDataNascimento();
@@ -69,7 +69,7 @@ public class PacienteEntity {
 
         if (id == null || !id.equals(paciente.getId())) {
             throw new IllegalArgumentException(
-                    "O paciente informado deve possuir o mesmo identificador da entidade."
+                    "O registro informado deve possuir o mesmo identificador da entidade."
             );
         }
 

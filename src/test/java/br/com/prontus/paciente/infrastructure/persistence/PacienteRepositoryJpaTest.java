@@ -252,7 +252,7 @@ class PacienteRepositoryJpaTest {
         );
 
         assertEquals(
-                "Paciente não encontrado para o identificador: 999",
+                "Registro não encontrado para o identificador: 999",
                 excecao.getMessage()
         );
 

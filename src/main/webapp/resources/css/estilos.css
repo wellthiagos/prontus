@@ -216,11 +216,27 @@ button:focus-visible {
 }
 
 .mensagens {
-    padding: 1rem 1rem 1rem 2rem;
-    border: 1px solid #f0b4b4;
+    padding: 0;
+    list-style: none;
+}
+
+.mensagens li {
+    margin-bottom: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--cor-borda);
     border-radius: 8px;
+}
+
+.mensagens .mensagens__erro {
+    border-color: #f0b4b4;
     background-color: #fff1f1;
-    color: #9b2424;
+    color: #b42318;
+    font-weight: 700;
+}
+
+.mensagens .mensagens__sucesso {
+    background-color: var(--cor-destaque);
+    color: var(--cor-primaria-hover);
 }
 
 .resultado__total {
@@ -281,4 +297,187 @@ button:focus-visible {
     .filtros {
         grid-template-columns: 1fr;
     }
+}
+
+/* Cadastro de pacientes */
+
+.pagina__cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.formulario-cadastro {
+    display: grid;
+    gap: 1.5rem;
+    max-width: 760px;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    background-color: var(--cor-superficie);
+}
+
+.formulario-cadastro__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.campo__erro {
+    display: block;
+    margin-top: 0.25rem;
+    color: #b42318;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+/* Evita que a regra dos campos afete o botão gerado pelo Faces. */
+
+.formulario-cadastro__acoes .botao {
+    width: auto;
+}
+
+.dialogo__acoes {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.formulario-cadastro .ui-button.botao {
+    background: var(--cor-primaria);
+    border-color: var(--cor-primaria);
+    color: var(--cor-superficie);
+    box-shadow: none;
+}
+
+.formulario-cadastro .ui-button.botao:hover {
+    background: var(--cor-primaria-hover);
+    border-color: var(--cor-primaria-hover);
+}
+
+.resultado__cabecalho {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+}
+
+body .tabela-pacientes .ui-datatable-header,
+body .tabela-pacientes .ui-datatable-thead > tr > th {
+    background: var(--cor-destaque);
+    color: var(--cor-texto);
+}
+
+body .tabela-pacientes .ui-paginator {
+    background: var(--cor-superficie);
+}
+
+body .tabela-pacientes .ui-paginator .ui-paginator-page.ui-state-active {
+    background: var(--cor-primaria);
+    color: var(--cor-superficie);
+}
+
+body .tabela-pacientes .ui-row-editor a {
+    color: var(--cor-primaria);
+}
+
+.tabela__acoes {
+    white-space: nowrap;
+}
+
+body .tabela-pacientes .tabela__acoes > .ui-row-editor {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.75rem;
+}
+
+body .tabela-pacientes .tabela__acoes > .ui-button {
+    vertical-align: middle;
+}
+/* Cabeçalho sempre acessível e listagem adaptável. */
+.cabecalho {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.cabecalho__conteudo { padding-block: 0.5rem; }
+.cabecalho__logo { width: 150px; }
+.conteudo:has(.listagem-pacientes) { padding-block: 1rem; }
+.listagem-pacientes .pagina__cabecalho h1 { margin-block: 0; }
+.listagem-pacientes .pagina__descricao { margin-block: 0.5rem; }
+.listagem-pacientes .filtros {
+    margin-block: 0.75rem;
+    padding: 0.75rem;
+    gap: 0.5rem 1rem;
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto;
+    align-items: end;
+}
+.listagem-pacientes .filtros__acoes { grid-column: auto; }
+body .listagem-pacientes .ui-datatable .ui-datatable-header,
+body .listagem-pacientes .ui-datatable thead > tr > th,
+body .listagem-pacientes .ui-datatable tbody > tr > td {
+    padding: 0.35rem 0.65rem;
+}
+body .listagem-pacientes .ui-datatable tbody > tr > td {
+    overflow-wrap: anywhere;
+}
+body .listagem-pacientes .ui-datatable .ui-paginator { padding: 0.25rem; }
+@media (max-width: 960px) {
+    .listagem-pacientes .filtros { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); }
+    .listagem-pacientes .filtros__acoes { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+    .cabecalho__conteudo { flex-direction: row; flex-wrap: wrap; gap: 0.25rem; }
+    .cabecalho__logo { width: 120px; }
+    .menu__link { padding: 0.5rem; }
+    .listagem-pacientes .filtros { grid-template-columns: minmax(0, 1fr); }
+    body .listagem-pacientes .ui-datatable-reflow tbody > tr > td {
+        width: 100%;
+        white-space: normal;
+    }
+    body .listagem-pacientes .ui-datatable-reflow .ui-column-title {
+        overflow-wrap: normal;
+    }
+    .listagem-pacientes .ui-paginator { white-space: normal; }
+}
+
+input[type="text"],
+input[type="search"],
+input:not([type]),
+textarea {
+    text-transform: uppercase;
+}
+.indicadores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-block: 1rem; }
+.indicador, .grafico-etario { background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: 12px; padding: 1.25rem; }
+.indicador { display: flex; flex-direction: column; gap: 0.4rem; }
+.indicador > span { color: var(--cor-texto-secundario); }
+.indicador strong { font-size: clamp(1.25rem, 3vw, 1.8rem); color: var(--cor-primaria); }
+.grafico-etario h2 { margin: 0; font-size: 1.2rem; }
+.grafico-faixas { padding: 0; list-style: none; margin: 1.5rem 0; display: grid; gap: 1.1rem; }
+.grafico-faixa { display: grid; grid-template-columns: 140px minmax(0, 1fr) 110px; align-items: center; gap: 1rem; }
+.grafico-faixa__trilho { display: block; height: 30px; border-radius: 4px; background: var(--cor-fundo); }
+.grafico-faixa__barra { display: block; height: 100%; background: var(--cor-primaria); border-radius: 4px; }
+.grafico-faixa__valor { text-align: right; white-space: nowrap; }
+.grafico-faixa__valor > span, .grafico-nota { color: var(--cor-texto-secundario); font-size: 0.875rem; }
+@media (max-width: 600px) {
+    .indicadores { grid-template-columns: 1fr; gap: 0.5rem; }
+    .indicador { flex-direction: row; justify-content: space-between; align-items: center; }
+    .grafico-faixa { grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem; }
+    .grafico-faixa__trilho { grid-column: 1 / -1; grid-row: 2; }
+    .grafico-faixa__valor { grid-column: 2; grid-row: 1; }
+}
+
+body .tabela-pacientes th.tabela__acoes,
+body .tabela-pacientes td.tabela__acoes {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.nome-maiusculo {
+    text-transform: uppercase;
 }

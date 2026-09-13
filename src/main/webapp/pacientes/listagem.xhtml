@@ -2,6 +2,8 @@
                 xmlns:h="jakarta.faces.html"
                 xmlns:f="jakarta.faces.core"
                 xmlns:ui="jakarta.faces.facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:pt="jakarta.faces.passthrough"
                 template="/WEB-INF/templates/template.xhtml">
 
     <ui:define name="titulo">
@@ -40,17 +42,25 @@
     </ui:define>
 
     <ui:define name="conteudo">
-        <section aria-labelledby="titulo-pacientes">
-            <h1 id="titulo-pacientes">Pacientes</h1>
+        <section class="listagem-pacientes" aria-labelledby="titulo-pacientes">
+            <div class="pagina__cabecalho">
+                <h1 id="titulo-pacientes">Pacientes</h1>
+
+                <h:link outcome="/pacientes/cadastro"
+                        value="Novo registro"
+                        styleClass="botao"/>
+            </div>
 
             <p class="pagina__descricao">
                 Consulte pelo nome e pelo intervalo de nascimento.
             </p>
 
-            <h:messages styleClass="mensagens"
-                        errorClass="mensagens__erro"
+            <h:messages id="mensagens"
+                        styleClass="mensagens"
                         showSummary="true"
-                        showDetail="false"/>
+                        showDetail="false"
+                        errorClass="mensagens__erro"
+                        infoClass="mensagens__sucesso"/>
 
             <form method="get"
                   action="#{request.contextPath}/pacientes/listagem.xhtml"
@@ -67,7 +77,7 @@
 
                 <div class="campo">
                     <label for="dataNascimentoIni">
-                        Nascimento inicial
+                        Data Nascimento Inicial
                     </label>
                     <input type="date"
                            id="dataNascimentoIni"
@@ -79,7 +89,7 @@
 
                 <div class="campo">
                     <label for="dataNascimentoFim">
-                        Nascimento final
+                        Data Nascimento Final
                     </label>
                     <input type="date"
                            id="dataNascimentoFim"
@@ -101,81 +111,187 @@
                 </div>
             </form>
 
-            <h:panelGroup layout="block"
-                          styleClass="resultado"
-                          rendered="#{not facesContext.validationFailed}">
-
-                <p class="resultado__total" role="status">
-                    Total de pacientes:
-                    <h:outputText value="#{pacienteConsultaBean.totalRegistros}"/>
-                </p>
-
+            <h:form id="tabelaForm">
                 <h:panelGroup layout="block"
-                              styleClass="estado-vazio"
-                              rendered="#{empty pacienteConsultaBean.pacientes}">
-                    Nenhum registro encontrado.
-                </h:panelGroup>
+                              styleClass="resultado"
+                              rendered="#{pacienteConsultaBean.modelo ne null}">
 
-                <h:panelGroup layout="block"
-                              styleClass="tabela-container"
-                              rendered="#{not empty pacienteConsultaBean.pacientes}">
-
-                    <h:dataTable value="#{pacienteConsultaBean.pacientes}"
+                    <p:dataTable id="pacientes"
+                                 widgetVar="tabelaPacientes"
+                                 value="#{pacienteConsultaBean.modelo}"
                                  var="paciente"
-                                 styleClass="tabela">
-                        <f:facet name="caption">
-                            Pacientes encontrados
+                                 rowKey="#{paciente.id}"
+                                 lazy="true" reflow="true"
+                                 paginator="true"
+                                 paginatorPosition="bottom"
+                                 paginatorAlwaysVisible="true"
+                                 rows="10"
+                                 first="#{pacienteConsultaBean.primeiraPosicao}"
+                                 rowsPerPageTemplate="10,20,50"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 editable="true"
+                                 editMode="row"
+                                 emptyMessage="Nenhum registro encontrado."
+                                 styleClass="tabela-pacientes">
+
+                        <p:ajax event="rowEdit"
+                                listener="#{pacienteConsultaBean.salvarEdicao}"
+                                update=":dialogErroEdicao :dialogAtualizacaoSucesso"
+                                oncomplete="if (args &amp;&amp; args.validationFailed) {
+                                    restaurarTabelaErro();
+                                } else if (args &amp;&amp; args.pacienteAtualizado) {
+                                    PF('atualizacaoSucesso').show();
+                                }"/>
+
+                        <p:ajax event="rowEditCancel" oncomplete="restaurarTabela();"/>
+
+                        <f:facet name="header">
+                            <h:panelGroup layout="block"
+                                          styleClass="resultado__cabecalho">
+                                <h:outputText value="Total de registros: #{pacienteConsultaBean.totalRegistros}"/>
+                                <h:outputLink value="#{request.contextPath}/relatorios/pacientes.pdf"
+                                              rendered="#{pacienteConsultaBean.totalRegistros gt 0}"
+                                              styleClass="botao botao--secundario" title="Baixar relatório em PDF">
+                                    <f:param name="nome" value="#{pacienteConsultaBean.nome}"/>
+                                    <f:param name="dataNascimentoIni" value="#{pacienteConsultaBean.dataNascimentoIni}"/>
+                                    <f:param name="dataNascimentoFim" value="#{pacienteConsultaBean.dataNascimentoFim}"/>
+                                    <span class="pi pi-file-pdf" aria-hidden="true"></span>
+                                    Baixar PDF
+                                </h:outputLink>
+                            </h:panelGroup>
                         </f:facet>
 
-                        <h:column>
-                            <f:facet name="header">Código</f:facet>
+                        <p:column headerText="Código">
                             <h:outputText value="#{paciente.id}"/>
-                        </h:column>
+                        </p:column>
 
-                        <h:column>
-                            <f:facet name="header">Nome completo</f:facet>
-                            <h:outputText value="#{paciente.nomeCompleto}"/>
-                        </h:column>
+                        <p:column headerText="Nome">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <h:outputText value="#{paciente.nomeCompleto}" styleClass="nome-maiusculo"/>
+                                </f:facet>
 
-                        <h:column>
-                            <f:facet name="header">
-                                Data de nascimento
-                            </f:facet>
-                            <h:outputText value="#{paciente.dataNascimento}">
-                                <f:convertDateTime type="localDate"
-                                                   pattern="dd/MM/yyyy"/>
-                            </h:outputText>
-                        </h:column>
-                    </h:dataTable>
+                                <f:facet name="input">
+                                    <div class="campo">
+                                        <h:inputText id="nomeEdicao"
+                                                     value="#{paciente.nomeCompleto}"
+                                                     required="true"
+                                                     requiredMessage="O nome completo é obrigatório."
+                                                     maxlength="255"
+                                                     pt:aria-label="Nome completo">
+                                            <f:validateBean/>
+                                        </h:inputText>
+                                    </div>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+
+                        <p:column headerText="Data de Nascimento">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <h:outputText value="#{paciente.dataNascimento}">
+                                        <f:convertDateTime type="localDate"
+                                                           pattern="dd/MM/yyyy"/>
+                                    </h:outputText>
+                                </f:facet>
+
+                                <f:facet name="input">
+                                    <div class="campo">
+                                        <h:inputText id="nascimentoEdicao"
+                                                     value="#{paciente.dataNascimento}"
+                                                     required="true"
+                                                     requiredMessage="A data de nascimento é obrigatória."
+                                                     converterMessage="Informe uma data de nascimento válida."
+                                                     pt:type="date"
+                                                     pt:min="1900-01-01"
+                                                     pt:max="#{pacienteConsultaBean.dataMaximaNascimento}"
+                                                     pt:aria-label="Data de nascimento">
+                                            <f:convertDateTime type="localDate"
+                                                               pattern="yyyy-MM-dd"/>
+                                            <f:validateBean/>
+                                        </h:inputText>
+                                    </div>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+
+                        <p:column headerText="Ações" styleClass="tabela__acoes">
+
+                                <p:rowEditor editTitle="Editar registro"
+                                             saveTitle="Salvar alteração"
+                                             cancelTitle="Cancelar edição"/>
+
+                                <p:commandButton id="calcularIdade"
+                                                 icon="pi pi-calculator"
+                                                 title="Calcular idade"
+                                                 ariaLabel="Calcular idade"
+                                                 action="#{pacienteConsultaBean.calcularIdade(paciente.id)}"
+                                                 process="@this"
+                                                 update=":dialogIdade"
+                                                 oncomplete="if (args &amp;&amp; args.idadeCalculada) {
+                                                                PF('dialogIdade').show();
+                                                             }"
+                                />
+                        </p:column>
+
+                    </p:dataTable>
                 </h:panelGroup>
+            </h:form>
+            <h:form id="restauracaoForm">
+                <p:remoteCommand name="restaurarTabelaErro"
+                                 action="#{pacienteConsultaBean.cancelarEdicao}"
+                                 process="@this" update=":tabelaForm :mensagens :dialogErroEdicao"
+                                 resetValues="true" oncomplete="PF('erroEdicao').show();"/>
+                <p:remoteCommand name="restaurarTabela"
+                                 action="#{pacienteConsultaBean.cancelarEdicao}"
+                                 process="@this"
+                                 update=":tabelaForm :mensagens"
+                                 resetValues="true"/>
+            </h:form>
+            <p:dialog id="dialogErroEdicao" widgetVar="erroEdicao"
+                      header="Não foi possível atualizar" modal="true"
+                      responsive="true" width="420" draggable="false" resizable="false">
+                <h:outputText value="#{pacienteConsultaBean.mensagemErroEdicao}" styleClass="campo__erro"/>
+                <div class="dialogo__acoes">
+                    <p:commandButton value="OK" type="button" onclick="PF('erroEdicao').hide();"/>
+                </div>
+            </p:dialog>
+            <p:dialog id="dialogIdade"
+                      widgetVar="dialogIdade"
+                      header="Idade calculada "
+                      modal="true"
+                      draggable="false"
+                      resizable="false"
+                      closeOnEscape="true"
+                      responsive="true"
+                      width="420">
 
-                <nav class="paginacao" aria-label="Paginação de pacientes">
-                    <h:link outcome="/pacientes/listagem"
-                            includeViewParams="true"
-                            value="Anterior"
-                            styleClass="botao botao--secundario"
-                            rendered="#{pacienteConsultaBean.possuiPaginaAnterior}">
-                        <f:param name="primeiraPosicao"
-                                 value="#{pacienteConsultaBean.posicaoAnterior}"/>
-                    </h:link>
+                <h:outputText value="#{pacienteConsultaBean.resultadoIdade}"/>
 
-                    <h:panelGroup rendered="#{not empty pacienteConsultaBean.pacientes}">
-                        Página
-                        <h:outputText value="#{pacienteConsultaBean.paginaAtual}"/>
-                        de
-                        <h:outputText value="#{pacienteConsultaBean.totalPaginas}"/>
-                    </h:panelGroup>
-
-                    <h:link outcome="/pacientes/listagem"
-                            includeViewParams="true"
-                            value="Próxima"
-                            styleClass="botao botao--secundario"
-                            rendered="#{pacienteConsultaBean.possuiProximaPagina}">
-                        <f:param name="primeiraPosicao"
-                                 value="#{pacienteConsultaBean.posicaoProxima}"/>
-                    </h:link>
-                </nav>
-            </h:panelGroup>
+                <div class="dialogo__acoes">
+                    <p:commandButton value="OK"
+                                     type="button"
+                                     onclick="PF('dialogIdade').hide();"/>
+                </div>
+            </p:dialog>
+            <p:dialog id="dialogAtualizacaoSucesso"
+                      widgetVar="atualizacaoSucesso"
+                      header="Atualização concluída"
+                      modal="true"
+                      closable="false"
+                      closeOnEscape="false"
+                      draggable="false"
+                      resizable="false"
+                      responsive="true"
+                      width="420">
+                <p>Paciente atualizado com sucesso.</p>
+                <div class="dialogo__acoes">
+                    <h:button value="OK"
+                              outcome="/pacientes/listagem"
+                              includeViewParams="true"
+                              styleClass="botao"/>
+                </div>
+            </p:dialog>
         </section>
     </ui:define>
 

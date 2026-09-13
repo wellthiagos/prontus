@@ -1,97 +1,137 @@
 package br.com.prontus.paciente.presentation;
 
+import br.com.prontus.paciente.application.AtualizarPaciente;
 import br.com.prontus.paciente.application.ListarPacientes;
-import br.com.prontus.paciente.application.PaginaPacientes;
 import br.com.prontus.paciente.domain.FiltroPacientes;
-import br.com.prontus.paciente.domain.Paciente;
+import br.com.prontus.paciente.domain.CalculoIdade;
 import br.com.prontus.paciente.domain.exception.DomainException;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import org.primefaces.PrimeFaces;
+import org.primefaces.event.RowEditEvent;
 
+import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.List;
 
 @Named("pacienteConsultaBean")
-@RequestScoped
-public class PacienteConsultaBean {
+@ViewScoped
+public class PacienteConsultaBean implements Serializable {
 
-    private static final int TAMANHO_PAGINA = 10;
+    private static final long serialVersionUID = 1L;
 
     @Inject
     private ListarPacientes listarPacientes;
 
+    @Inject
+    private AtualizarPaciente atualizarPaciente;
+
+    @Inject
+    private CalculoIdade calculoIdadePaciente;
+
     private String nome;
     private LocalDate dataNascimentoIni;
     private LocalDate dataNascimentoFim;
+    private Integer idadeCalculada;
     private int primeiraPosicao;
 
-    private List<Paciente> pacientes = List.of();
-    private long totalRegistros;
+    private FiltroPacientes filtroAplicado;
+    private PacienteTabelaModel modelo;
 
     public void carregar() {
-        pacientes = List.of();
-        totalRegistros = 0;
+        modelo = null;
 
         try {
-            FiltroPacientes filtro = new FiltroPacientes(
+            filtroAplicado = new FiltroPacientes(
                     nome,
                     dataNascimentoIni,
                     dataNascimentoFim
             );
 
-            PaginaPacientes pagina = listarPacientes.executar(
-                    filtro,
-                    primeiraPosicao,
-                    TAMANHO_PAGINA
+            modelo = new PacienteTabelaModel(
+                    listarPacientes,
+                    filtroAplicado
             );
-
-            pacientes = pagina.pacientes();
-            totalRegistros = pagina.totalRegistros();
         } catch (DomainException excecao) {
-            FacesContext contexto = FacesContext.getCurrentInstance();
-
-            contexto.addMessage(
-                    null,
-                    new FacesMessage(
-                            FacesMessage.SEVERITY_ERROR,
-                            excecao.getMessage(),
-                            null
-                    )
-            );
-
-            contexto.validationFailed();
+            informarErro(excecao.getMessage());
         }
     }
 
-    public boolean isPossuiPaginaAnterior() {
-        return primeiraPosicao > 0;
+    public void salvarEdicao(RowEditEvent<PacienteLinha> evento) {
+        PacienteLinha linha = evento.getObject();
+
+        try {
+            atualizarPaciente.executar(
+                    linha.getId(),
+                    linha.getNomeCompleto(),
+                    linha.getDataNascimento()
+            );
+        } catch (DomainException excecao) {
+            informarErro(excecao.getMessage());
+            return;
+        }
+
+        PrimeFaces.current().ajax().addCallbackParam("pacienteAtualizado", true);
     }
 
-    public boolean isPossuiProximaPagina() {
-        return (long) primeiraPosicao + TAMANHO_PAGINA
-                < totalRegistros;
+    public void calcularIdade(Long pacienteId) {
+        idadeCalculada = calculoIdadePaciente.calcular(pacienteId);
+
+        PrimeFaces.current().ajax()
+                .addCallbackParam("idadeCalculada", true);
     }
 
-    public int getPosicaoAnterior() {
-        return Math.max(0, primeiraPosicao - TAMANHO_PAGINA);
+    public String getResultadoIdade() {
+        if (idadeCalculada == null) {
+            return "";
+        }
+
+        return "Resultado: " + idadeCalculada
+                + (idadeCalculada == 1 ? " ano" : " anos");
     }
 
-    public long getPosicaoProxima() {
-        return (long) primeiraPosicao + TAMANHO_PAGINA;
+    private String mensagemErroEdicao;
+
+    public String getMensagemErroEdicao() {
+        var mensagens = FacesContext.getCurrentInstance().getMessageList();
+        if (!mensagens.isEmpty()) {
+            mensagemErroEdicao = mensagens.stream()
+                    .map(FacesMessage::getSummary)
+                    .distinct()
+                    .collect(java.util.stream.Collectors.joining(" "));
+        }
+        return mensagemErroEdicao;
+    }
+    public void cancelarEdicao() {
+        modelo = new PacienteTabelaModel(
+                listarPacientes,
+                filtroAplicado
+        );
     }
 
-    public long getPaginaAtual() {
-        return totalRegistros == 0
-                ? 0
-                : (long) primeiraPosicao / TAMANHO_PAGINA + 1;
+    private void informarErro(String mensagem) {
+        FacesContext contexto = FacesContext.getCurrentInstance();
+
+        contexto.addMessage(
+                null,
+                new FacesMessage(
+                        FacesMessage.SEVERITY_ERROR,
+                        mensagem,
+                        null
+                )
+        );
+
+        contexto.validationFailed();
     }
 
-    public long getTotalPaginas() {
-        return totalRegistros / TAMANHO_PAGINA
-                + (totalRegistros % TAMANHO_PAGINA == 0 ? 0 : 1);
+    public PacienteTabelaModel getModelo() {
+        return modelo;
+    }
+
+    public long getTotalRegistros() {
+        return modelo == null ? 0 : modelo.getRowCount();
     }
 
     public String getNome() {
@@ -124,14 +164,6 @@ public class PacienteConsultaBean {
 
     public void setPrimeiraPosicao(int primeiraPosicao) {
         this.primeiraPosicao = primeiraPosicao;
-    }
-
-    public List<Paciente> getPacientes() {
-        return pacientes;
-    }
-
-    public long getTotalRegistros() {
-        return totalRegistros;
     }
 
     public String getDataMaximaNascimento() {

@@ -42,7 +42,7 @@ public class Paciente {
 
         if (id == null || id <= 0) {
             throw new DomainException(
-                    "O identificador do paciente deve ser positivo."
+                    "O identificador deve ser positivo."
             );
         }
 
@@ -57,7 +57,7 @@ public class Paciente {
     private static String validarNomeCompleto(String nomeCompleto) {
         if (nomeCompleto == null || nomeCompleto.isBlank()) {
             throw new DomainException(
-                    "O nome completo é obrigatório."
+                    "O nome é obrigatório."
             );
         }
 
@@ -65,7 +65,7 @@ public class Paciente {
 
         if (nomeNormalizado.length() > TAMANHO_MAXIMO_NOME) {
             throw new DomainException(
-                    "O nome completo deve ter no máximo 255 caracteres."
+                    "O nome deve ter no máximo 255 caracteres."
             );
         }
 

@@ -4,16 +4,20 @@ import br.com.prontus.paciente.domain.FiltroPacientes;
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
 import br.com.prontus.paciente.domain.exception.DomainException;
-import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.List;
 import java.util.Objects;
 
-@Dependent
+@ApplicationScoped
 public class ListarPacientes {
 
     private final PacienteRepository repository;
+
+    protected ListarPacientes() {
+        this.repository = null;
+    }
 
     @Inject
     public ListarPacientes(PacienteRepository repository) {

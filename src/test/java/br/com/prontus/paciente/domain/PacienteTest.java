@@ -115,7 +115,7 @@ public class PacienteTest {
         );
 
         assertEquals(
-                "O nome completo é obrigatório.",
+                "O nome é obrigatório.",
                 excecao.getMessage()
         );
     }
@@ -173,7 +173,7 @@ public class PacienteTest {
         );
 
         assertEquals(
-                "O identificador do paciente deve ser positivo.",
+                "O identificador deve ser positivo.",
                 excecao.getMessage()
         );
     }
@@ -203,7 +203,7 @@ public class PacienteTest {
         );
 
         assertEquals(
-                "O nome completo deve ter no máximo 255 caracteres.",
+                "O nome deve ter no máximo 255 caracteres.",
                 excecao.getMessage()
         );
     }

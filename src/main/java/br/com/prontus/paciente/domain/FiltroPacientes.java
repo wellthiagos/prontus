@@ -2,13 +2,14 @@ package br.com.prontus.paciente.domain;
 
 import br.com.prontus.paciente.domain.exception.DomainException;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 public record FiltroPacientes(
         String nome,
         LocalDate dataNascimentoIni,
         LocalDate dataNascimentoFim
-) {
+) implements Serializable {
 
     public FiltroPacientes {
         nome = nome == null ? null : nome.strip();
