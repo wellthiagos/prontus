@@ -1,6 +1,7 @@
 package br.com.prontus.paciente.application;
 
 import br.com.prontus.paciente.domain.FiltroPacientes;
+import br.com.prontus.paciente.domain.OrdenacaoPaciente;
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
 import br.com.prontus.paciente.domain.exception.DomainException;
@@ -58,6 +59,15 @@ public class ListarPacientes {
         long totalRegistros = repository.contar(filtro);
 
         return new PaginaPacientes(pacientes, totalRegistros);
+    }
+
+    public PaginaPacientes executar(FiltroPacientes filtro, int primeiraPosicao,
+                                     int quantidade, OrdenacaoPaciente ordem) {
+        Objects.requireNonNull(filtro, "O filtro é obrigatório.");
+        Objects.requireNonNull(ordem, "A ordenação é obrigatória.");
+        validarPaginacao(primeiraPosicao, quantidade);
+        return new PaginaPacientes(repository.listar(filtro, primeiraPosicao, quantidade, ordem),
+                repository.contar(filtro));
     }
 
     private void validarPaginacao(

@@ -481,3 +481,17 @@ body .tabela-pacientes td.tabela__acoes {
 .nome-maiusculo {
     text-transform: uppercase;
 }
+/* Prioriza o nome na tabela; no celular, preserva o reflow em largura total. */
+@media (min-width: 641px) {
+    body .tabela-pacientes table { table-layout: fixed; width: 100%; }
+    body .tabela-pacientes th.tabela__codigo { width: 8%; }
+    body .tabela-pacientes th.tabela__nome { width: 54%; }
+    body .tabela-pacientes th.tabela__nascimento { width: 22%; }
+    body .tabela-pacientes th.tabela__acoes { width: 16%; }
+}
+body .tabela-pacientes .ui-sortable-column-icon {
+    font-size: 0.75rem;
+    margin-left: 0.3rem;
+    opacity: 0.65;
+}
+body .tabela-pacientes th.ui-state-active .ui-sortable-column-icon { opacity: 1; }

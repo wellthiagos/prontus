@@ -6,6 +6,8 @@ import br.com.prontus.paciente.domain.FiltroPacientes;
 import org.primefaces.model.FilterMeta;
 import org.primefaces.model.LazyDataModel;
 import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
+import br.com.prontus.paciente.domain.OrdenacaoPaciente;
 
 import java.util.List;
 import java.util.Map;
@@ -45,7 +47,7 @@ public class PacienteTabelaModel extends LazyDataModel<PacienteLinha> {
             Map<String, SortMeta> sortBy,
             Map<String, FilterMeta> filterBy
     ) {
-        PaginaPacientes pagina = listarPacientes.executar(
+        PaginaPacientes pagina = carregarPagina(sortBy,
                 filtro,
                 first,
                 pageSize
@@ -55,7 +57,7 @@ public class PacienteTabelaModel extends LazyDataModel<PacienteLinha> {
         int primeiraPosicao = recalculateFirst(first, pageSize, total);
 
         if (primeiraPosicao != first && total > 0) {
-            pagina = listarPacientes.executar(
+            pagina = carregarPagina(sortBy,
                     filtro,
                     primeiraPosicao,
                     pageSize
@@ -70,6 +72,21 @@ public class PacienteTabelaModel extends LazyDataModel<PacienteLinha> {
                 .stream()
                 .map(PacienteLinha::new)
                 .toList();
+    }
+
+    private PaginaPacientes carregarPagina(Map<String, SortMeta> sortBy, FiltroPacientes filtro,
+                                           int first, int pageSize) {
+        SortMeta meta = sortBy.values().stream()
+                .filter(s -> s.getOrder() != SortOrder.UNSORTED).findFirst().orElse(null);
+        if (meta == null) return listarPacientes.executar(filtro, first, pageSize);
+        boolean desc = meta.getOrder() == SortOrder.DESCENDING;
+        OrdenacaoPaciente ordem = switch (meta.getField()) {
+            case "id" -> desc ? OrdenacaoPaciente.CODIGO_DESC : OrdenacaoPaciente.CODIGO_ASC;
+            case "nomeCompleto" -> desc ? OrdenacaoPaciente.NOME_DESC : OrdenacaoPaciente.NOME_ASC;
+            case "dataNascimento" -> desc ? OrdenacaoPaciente.NASCIMENTO_DESC : OrdenacaoPaciente.NASCIMENTO_ASC;
+            default -> throw new IllegalArgumentException("Coluna de ordenação inválida.");
+        };
+        return listarPacientes.executar(filtro, first, pageSize, ordem);
     }
 
     @Override

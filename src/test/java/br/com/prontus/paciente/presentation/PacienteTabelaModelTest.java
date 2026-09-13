@@ -144,4 +144,16 @@ class PacienteTabelaModelTest {
                 LocalDate.of(1990, 5, 20)
         );
     }
-}
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({
+        "id,ASCENDING,CODIGO_ASC", "id,DESCENDING,CODIGO_DESC",
+        "nomeCompleto,ASCENDING,NOME_ASC", "nomeCompleto,DESCENDING,NOME_DESC",
+        "dataNascimento,ASCENDING,NASCIMENTO_ASC", "dataNascimento,DESCENDING,NASCIMENTO_DESC"})
+    void encaminharOrdenacao(String campo, org.primefaces.model.SortOrder sentido,
+                            br.com.prontus.paciente.domain.OrdenacaoPaciente ordem) {
+        when(listarPacientes.executar(filtro, 0, 10, ordem))
+                .thenReturn(new PaginaPacientes(List.of(criarPaciente()), 1));
+        var meta = org.primefaces.model.SortMeta.builder().field(campo).order(sentido).build();
+        assertEquals(1, modelo.load(0, 10, Map.of(campo, meta), Map.of()).size());
+        verify(listarPacientes).executar(filtro, 0, 10, ordem);
+    }}

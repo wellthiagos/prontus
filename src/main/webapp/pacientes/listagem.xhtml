@@ -129,7 +129,7 @@
                                  first="#{pacienteConsultaBean.primeiraPosicao}"
                                  rowsPerPageTemplate="10,20,50"
                                  paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-                                 editable="true"
+                                 sortMode="single" editable="true"
                                  editMode="row"
                                  emptyMessage="Nenhum registro encontrado."
                                  styleClass="tabela-pacientes">
@@ -161,11 +161,11 @@
                             </h:panelGroup>
                         </f:facet>
 
-                        <p:column headerText="Código">
+                        <p:column headerText="Código" field="id" filterable="false" sortBy="#{paciente.id}" styleClass="tabela__codigo">
                             <h:outputText value="#{paciente.id}"/>
                         </p:column>
 
-                        <p:column headerText="Nome">
+                        <p:column headerText="Nome" field="nomeCompleto" filterable="false" sortBy="#{paciente.nomeCompleto}" styleClass="tabela__nome">
                             <p:cellEditor>
                                 <f:facet name="output">
                                     <h:outputText value="#{paciente.nomeCompleto}" styleClass="nome-maiusculo"/>
@@ -186,7 +186,7 @@
                             </p:cellEditor>
                         </p:column>
 
-                        <p:column headerText="Data de Nascimento">
+                        <p:column headerText="Data de Nascimento" field="dataNascimento" filterable="false" sortBy="#{paciente.dataNascimento}" styleClass="tabela__nascimento">
                             <p:cellEditor>
                                 <f:facet name="output">
                                     <h:outputText value="#{paciente.dataNascimento}">

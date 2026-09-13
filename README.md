@@ -54,7 +54,7 @@ e testes, com abstrações introduzidas conforme a necessidade.
 ## Funcionalidades implementadas
 
 - Cadastro de pacientes com nome completo e data de nascimento.
-- Listagem paginada com PrimeFaces DataTable.
+- Listagem paginada com PrimeFaces DataTable e ordenação por Código, Nome e Data de Nascimento.
 - Edição dos dados dos pacientes.
 - Validações com Jakarta Bean Validation.
 - Procedure Oracle P_PATIENT_AGE, com identificador do paciente
@@ -81,12 +81,12 @@ Para executar os testes e gerar o WAR:
 
 ### Cobertura atual
 
-São 170 execuções de testes validadas:
+A suíte contém 182 execuções de testes:
 
-- 154 na suíte padrão (domínio, casos de uso, apresentação e integração H2).
+- 166 na suíte padrão (domínio, casos de uso, apresentação e integração H2).
 - 16 na suíte de integração Oracle, executada separadamente pelo perfil oracle-it.
 
-O comando mvn test executa os 154 testes padrão. Os comandos do ambiente
+O comando mvn test executa os 166 testes padrão. Os comandos do ambiente
 de integração Oracle, documentados abaixo, executam as duas suítes.
 
 Os testes dos casos de uso verificam cadastro, atualização, busca,
@@ -111,7 +111,7 @@ Estão implementados:
 O workflow `.github/workflows/ci.yml` executa em pushes para `main`, pull requests
 e manualmente pela aba **Actions** do GitHub.
 
-- **Testes Java e Oracle:** executa os 154 testes padrão e os 16 testes Oracle
+- **Testes Java e Oracle:** executa os 166 testes padrão e os 16 testes Oracle
   em um banco novo, criado pelos scripts do projeto. Falhas nos testes reprovam o job.
 - **Build da imagem Docker:** valida os arquivos Compose e constrói a imagem
   usando o Dockerfile do projeto, incluindo a compilação e os testes padrão.

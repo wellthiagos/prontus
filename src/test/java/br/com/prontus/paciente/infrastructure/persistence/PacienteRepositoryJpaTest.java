@@ -472,4 +472,21 @@ class PacienteRepositoryJpaTest {
                 repository.listar(filtro, esperados.size(), 1).isEmpty()
         );
     }
-}
+    @ParameterizedTest
+    @CsvSource({"CODIGO_ASC,0,1,2", "CODIGO_DESC,2,1,0", "NOME_ASC,1,2,0",
+                "NOME_DESC,0,1,2", "NASCIMENTO_ASC,1,2,0", "NASCIMENTO_DESC,0,1,2"})
+    void ordenarAntesDePaginar(br.com.prontus.paciente.domain.OrdenacaoPaciente ordem,
+                               int a, int b, int c) {
+        entityManager.getTransaction().begin();
+        var registros = List.of(
+            repository.salvar(new Paciente("Zelia", LocalDate.of(2000, 1, 1))),
+            repository.salvar(new Paciente("ana", LocalDate.of(1990, 1, 1))),
+            repository.salvar(new Paciente("ANA", LocalDate.of(1990, 1, 1))));
+        var filtro = FiltroPacientes.semFiltros();
+        var primeira = repository.listar(filtro, 0, 2, ordem);
+        var segunda = repository.listar(filtro, 2, 2, ordem);
+        assertEquals(List.of(registros.get(a).getId(), registros.get(b).getId()),
+                primeira.stream().map(Paciente::getId).toList());
+        assertEquals(List.of(registros.get(c).getId()), segunda.stream().map(Paciente::getId).toList());
+        assertEquals(3, repository.contar(filtro));
+    }}

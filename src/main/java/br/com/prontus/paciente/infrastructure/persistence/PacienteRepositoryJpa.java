@@ -1,6 +1,7 @@
 package br.com.prontus.paciente.infrastructure.persistence;
 
 import br.com.prontus.paciente.domain.FiltroPacientes;
+import br.com.prontus.paciente.domain.OrdenacaoPaciente;
 import br.com.prontus.paciente.domain.Paciente;
 import br.com.prontus.paciente.domain.PacienteRepository;
 import br.com.prontus.paciente.domain.exception.PacienteNaoEncontradoException;
@@ -87,6 +88,13 @@ public class PacienteRepositoryJpa implements PacienteRepository {
             int primeiraPosicao,
             int quantidade
     ) {
+
+        return listar(filtro, primeiraPosicao, quantidade, OrdenacaoPaciente.CODIGO_ASC);
+    }
+
+    @Override
+    public List<Paciente> listar(FiltroPacientes filtro, int primeiraPosicao,
+                                 int quantidade, OrdenacaoPaciente ordem) {
         Objects.requireNonNull(filtro, "O filtro é obrigatório.");
 
         if (primeiraPosicao < 0) {
@@ -103,7 +111,14 @@ public class PacienteRepositoryJpa implements PacienteRepository {
 
         String jpql = "SELECT p FROM PacienteEntity p"
                 + montarCondicoes(filtro)
-                + " ORDER BY p.id";
+                + " ORDER BY " + switch (Objects.requireNonNull(ordem, "A ordenação é obrigatória.")) {
+                    case CODIGO_ASC -> "p.id ASC";
+                    case CODIGO_DESC -> "p.id DESC";
+                    case NOME_ASC -> "UPPER(p.nomeCompleto) ASC, p.id ASC";
+                    case NOME_DESC -> "UPPER(p.nomeCompleto) DESC, p.id ASC";
+                    case NASCIMENTO_ASC -> "p.dataNascimento ASC, p.id ASC";
+                    case NASCIMENTO_DESC -> "p.dataNascimento DESC, p.id ASC";
+                };
 
         TypedQuery<PacienteEntity> consulta = entityManager.createQuery(
                 jpql,
