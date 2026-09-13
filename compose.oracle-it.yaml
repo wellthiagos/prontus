@@ -1,0 +1,31 @@
+# Ambiente exclusivo dos testes. Nunca monta oracle-dados da aplicacao.
+services:
+  oracle-it:
+    image: gvenzl/oracle-free:23-slim
+    environment:
+      ORACLE_PASSWORD: OracleIntegrationAdmin123
+      APP_USER: prontus
+      APP_USER_PASSWORD: OracleIntegrationApp123
+    volumes:
+      - /opt/oracle/oradata
+      - ./docker/oracle/00-inicializar.sql:/container-entrypoint-initdb.d/00-inicializar.sql:ro
+      - ./docker/oracle/01-schema.sql:/opt/prontus/sql/01-schema.sql:ro
+      - ./docker/oracle/02-procedure-idade.sql:/opt/prontus/sql/02-procedure-idade.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 120s
+  testes:
+    image: maven:3.9.9-eclipse-temurin-17
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      ORACLE_IT_URL: jdbc:oracle:thin:@//oracle-it:1521/FREEPDB1
+      ORACLE_IT_PASSWORD: OracleIntegrationApp123
+    depends_on:
+      oracle-it:
+        condition: service_healthy
+    command: ["mvn", "-B", "-ntp", "-Poracle-it", "verify"]

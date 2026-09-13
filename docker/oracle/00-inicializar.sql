@@ -1,0 +1,30 @@
+WHENEVER OSERROR EXIT FAILURE;
+WHENEVER SQLERROR EXIT SQL.SQLCODE ROLLBACK;
+
+ALTER SESSION SET CONTAINER = FREEPDB1;
+ALTER SESSION SET CURRENT_SCHEMA = PRONTUS;
+
+@/opt/prontus/sql/01-schema.sql
+@/opt/prontus/sql/02-procedure-idade.sql
+
+DECLARE
+v_validas NUMBER;
+BEGIN
+SELECT COUNT(*)
+INTO v_validas
+FROM ALL_OBJECTS
+WHERE OWNER = 'PRONTUS'
+  AND OBJECT_NAME = 'P_PATIENT_AGE'
+  AND OBJECT_TYPE = 'PROCEDURE'
+  AND STATUS = 'VALID';
+
+IF v_validas <> 1 THEN
+        RAISE_APPLICATION_ERROR(
+            -20010,
+            'A procedure P_PATIENT_AGE não foi criada corretamente.'
+        );
+END IF;
+END;
+/
+
+EXIT SUCCESS;

@@ -57,7 +57,7 @@ public class Paciente {
     private static String validarNomeCompleto(String nomeCompleto) {
         if (nomeCompleto == null || nomeCompleto.isBlank()) {
             throw new DomainException(
-                    "O nome é obrigatório."
+                    "O nome completo é obrigatório."
             );
         }
 

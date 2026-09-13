@@ -1,5 +1,9 @@
-embed-server --server-config=standalone.xml --std-out=echo
+module add --name=com.oracle.jdbc --resources=/opt/jboss/scripts/ojdbc11.jar --dependencies=java.se,jakarta.transaction.api
 
-/subsystem=datasources/data-source=ProntusDS:add(jndi-name="java:jboss/datasources/ProntusDS",driver-name="h2",connection-url="jdbc:h2:file:/opt/jboss/dados/prontus;MODE=Oracle;DEFAULT_NULL_ORDERING=HIGH;INIT=RUNSCRIPT FROM '/opt/jboss/scripts/init.sql'",user-name="sa",password="sa",jta=true,enabled=true,min-pool-size=1,max-pool-size=10)
+embed-server --server-config=standalone.xml --std-out=echo --admin-only=true
+
+/subsystem=datasources/jdbc-driver=oracle:add(driver-name="oracle",driver-module-name="com.oracle.jdbc",driver-class-name="oracle.jdbc.OracleDriver")
+
+/subsystem=datasources/data-source=ProntusDS:add(jndi-name="java:jboss/datasources/ProntusDS",driver-name="oracle",connection-url="jdbc:oracle:thin:@//oracle:1521/FREEPDB1",user-name="prontus",password="${env.PRONTUS_DB_PASSWORD}",jta=true,enabled=true,min-pool-size=1,max-pool-size=10)
 
 stop-embedded-server

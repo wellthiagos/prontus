@@ -115,7 +115,7 @@ public class PacienteTest {
         );
 
         assertEquals(
-                "O nome é obrigatório.",
+                "O nome completo é obrigatório.",
                 excecao.getMessage()
         );
     }

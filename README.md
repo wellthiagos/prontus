@@ -266,3 +266,27 @@ momentos diferentes quando há alterações concorrentes.
 - Testes de domínio, casos de uso e integração da persistência.
 - Licença MIT.
 
+
+### Testes de integracao Oracle
+
+Requer Docker Compose. O ambiente abaixo usa um banco separado, sem portas
+publicadas e sem acesso ao volume da aplicacao. As senhas desse Compose sao
+exclusivas para o banco descartavel de testes; nao utiliza o arquivo .env.
+
+```powershell
+docker compose -p prontus-oracle-it -f compose.oracle-it.yaml up --abort-on-container-exit --exit-code-from testes
+docker compose -p prontus-oracle-it -f compose.oracle-it.yaml down -v
+```
+
+Execute o segundo comando mesmo se os testes falharem; ele remove somente o
+ambiente prontus-oracle-it e permite validar a inicializacao do zero na proxima
+execucao. Nao execute simultaneamente com outro build Maven neste diretorio.
+Relatorios: target/failsafe-reports (Oracle) e target/surefire-reports (testes existentes).
+O perfil oracle-it executa os testes existentes e os testes Oracle no Maven verify.
+O build normal continua sem exigir um Oracle de testes.
+
+A procedure aceita p_reference_date como terceiro parametro opcional para
+validacao deterministica de aniversarios. Quando omitido, utiliza a data atual
+em America/Sao_Paulo. A aplicacao continua chamando os dois parametros originais.
+Em bancos ja existentes, reaplique docker/oracle/02-procedure-idade.sql para
+disponibilizar esse parametro; os scripts de inicializacao rodam apenas em bancos novos.

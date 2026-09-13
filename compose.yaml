@@ -8,6 +8,33 @@ services:
       - "127.0.0.1:8080:8080"
     volumes:
       - prontus-dados:/opt/jboss/dados
+    environment:
+      PRONTUS_DB_PASSWORD: "${PRONTUS_DB_PASSWORD:?Defina PRONTUS_DB_PASSWORD no arquivo .env}"
+    depends_on:
+      oracle:
+        condition: service_healthy
+
+  oracle:
+    image: gvenzl/oracle-free:23-slim
+    ports:
+      - "127.0.0.1:1521:1521"
+    environment:
+      ORACLE_PASSWORD: "${ORACLE_PASSWORD:?Defina ORACLE_PASSWORD no arquivo .env}"
+      APP_USER: prontus
+      APP_USER_PASSWORD: "${PRONTUS_DB_PASSWORD:?Defina PRONTUS_DB_PASSWORD no arquivo .env}"
+    volumes:
+      - oracle-dados:/opt/oracle/oradata
+      - ./docker/oracle/00-inicializar.sql:/container-entrypoint-initdb.d/00-inicializar.sql:ro
+      - ./docker/oracle/01-schema.sql:/opt/prontus/sql/01-schema.sql:ro
+      - ./docker/oracle/02-procedure-idade.sql:/opt/prontus/sql/02-procedure-idade.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
 
 volumes:
   prontus-dados:
+  oracle-dados:

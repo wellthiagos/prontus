@@ -9,6 +9,10 @@ COPY docker/h2/init.sql ./docker/h2/init.sql
 
 RUN mvn -B -ntp clean package
 
+RUN mvn -B -ntp org.apache.maven.plugins:maven-dependency-plugin:3.8.1:copy \
+    -Dartifact=com.oracle.database.jdbc:ojdbc11:23.26.3.0.0 \
+    -DoutputDirectory=/app/jdbc
+
 # Etapa 2: configura o servidor e executa a aplicação
 FROM quay.io/wildfly/wildfly:37.0.0.Final-jdk17
 
@@ -24,6 +28,10 @@ COPY --chown=jboss:jboss docker/h2/init.sql \
 
 COPY --chown=jboss:jboss docker/wildfly/configurar.cli \
     /opt/jboss/scripts/configurar.cli
+
+COPY --from=build --chown=jboss:jboss \
+    /app/jdbc/ojdbc11-23.26.3.0.0.jar \
+    /opt/jboss/scripts/ojdbc11.jar
 
 RUN /opt/jboss/wildfly/bin/jboss-cli.sh \
     --file=/opt/jboss/scripts/configurar.cli \
