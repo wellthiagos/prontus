@@ -20,8 +20,7 @@ Java 17, Jakarta EE 10 e PrimeFaces 14. Por esse motivo, o projeto
 adota essas versões em substituição às indicadas no enunciado.
 
 Essa autorização se refere às versões mencionadas acima.
-O servidor de aplicação será escolhido de acordo com a
-compatibilidade com Jakarta EE 10.
+O servidor adotado é o WildFly 37.0.0.Final, compatível com Jakarta EE 10.
 
 Os requisitos funcionais e os critérios de entrega previstos
 no desafio permanecem mantidos.
@@ -29,27 +28,30 @@ no desafio permanecem mantidos.
 ## Tecnologias configuradas
 
 - Java 17.
-- Maven.
+- Maven 3.9.9 no Docker.
 - Jakarta EE 10.
 - PrimeFaces 14.0.12, na variante Jakarta.
+- WildFly 37.0.0.Final com Java 17.
+- Oracle Free (imagem gvenzl/oracle-free:23-slim).
+- JasperReports 6.21.5.
 - Empacotamento WAR.
 
 ## Arquitetura e diretrizes
 
-O projeto será desenvolvido com Clean Code, princípios SOLID
+O projeto utiliza Clean Code, princípios SOLID
 e Domain-Driven Design (DDD).
 
-A implementação será organizada nas seguintes camadas:
+A implementação está organizada nas seguintes camadas:
 
 - **Domínio:** modelo de paciente e regras de negócio.
 - **Aplicação:** coordenação dos casos de uso.
 - **Infraestrutura:** persistência, procedures e geração de relatórios.
 - **Apresentação:** telas JSF e componentes PrimeFaces.
 
-As responsabilidades serão separadas para facilitar manutenção
+As responsabilidades são separadas para facilitar manutenção
 e testes, com abstrações introduzidas conforme a necessidade.
 
-## Funcionalidades planejadas
+## Funcionalidades implementadas
 
 - Cadastro de pacientes com nome completo e data de nascimento.
 - Listagem paginada com PrimeFaces DataTable.
@@ -57,7 +59,7 @@ e testes, com abstrações introduzidas conforme a necessidade.
 - Validações com Jakarta Bean Validation.
 - Procedure Oracle P_PATIENT_AGE, com identificador do paciente
   como entrada e idade em anos como saída.
-- Botão “Calcular Idade”, com exibição do resultado em Growl ou Dialog.
+- Botão “Calcular Idade”, com exibição do resultado em Dialog.
 - Gráficos de pacientes por faixa etária.
 - Relatório PDF de pacientes com JasperReports.
 
@@ -67,7 +69,7 @@ não exigida no enunciado.
 ## Testes
 
 Os testes unitários utilizam JUnit 5 e são executados pelo
-Maven Surefire, sem necessidade de Docker, WildFly ou banco.
+Maven Surefire. A suíte padrão inclui integração com H2 em memória e não exige Docker, WildFly ou banco externo.
 
 Para executar:
 
@@ -79,11 +81,13 @@ Para executar os testes e gerar o WAR:
 
 ### Cobertura atual
 
-São 73 execuções de testes:
+São 170 execuções de testes validadas:
 
-- 17 de domínio.
-- 44 dos casos de uso, com Mockito.
-- 12 de integração da persistência, com Hibernate e H2.
+- 154 na suíte padrão (domínio, casos de uso, apresentação e integração H2).
+- 16 na suíte de integração Oracle, executada separadamente pelo perfil oracle-it.
+
+O comando mvn test executa os 154 testes padrão. Os comandos do ambiente
+de integração Oracle, documentados abaixo, executam as duas suítes.
 
 Os testes dos casos de uso verificam cadastro, atualização, busca,
 paginação, rejeição de dados inválidos e propagação de falhas.
@@ -97,14 +101,27 @@ CDI e o gerenciamento de transações JTA.
 
 ## Docker e integração contínua
 
-Estão planejados:
+Estão implementados:
 
 - Dockerfile com build em múltiplas etapas.
 - Ambiente de execução com WildFly compatível com Jakarta EE 10.
 - Docker Compose para iniciar o ambiente local.
 - Persistência dos dados entre reinicializações dos contêineres.
-- GitHub Actions para compilar, executar testes e validar
-  a construção da imagem Docker.
+
+O workflow `.github/workflows/ci.yml` executa em pushes para `main`, pull requests
+e manualmente pela aba **Actions** do GitHub.
+
+- **Testes Java e Oracle:** executa os 154 testes padrão e os 16 testes Oracle
+  em um banco novo, criado pelos scripts do projeto. Falhas nos testes reprovam o job.
+- **Build da imagem Docker:** valida os arquivos Compose e constrói a imagem
+  usando o Dockerfile do projeto, incluindo a compilação e os testes padrão.
+- Os relatórios JUnit e os logs do ambiente Oracle ficam no artefato
+  `resultados-testes`, disponível por 7 dias, inclusive quando um teste falha.
+- O ambiente de testes é removido ao final. Não são necessárias credenciais
+  pessoais nem secrets para esses jobs; os valores de exemplo são locais aos runners.
+
+O workflow valida testes e construção, sem publicar imagem nem implantar a aplicação.
+A primeira execução remota ocorrerá após o envio desse arquivo ao GitHub.
 
 Docker, integração contínua e gráficos atendem à categoria
 de extras prevista nos critérios de avaliação.
@@ -114,7 +131,7 @@ de extras prevista nos critérios de avaliação.
 ### Pré-requisitos
 
 - JDK 17.
-- Maven.
+- Maven 3.9.9 no Docker.
 
 ### Verificação do ambiente
 
@@ -135,8 +152,8 @@ O artefato será gerado em:
 
     target/prontus.war
 
-A geração do WAR valida o empacotamento. A execução da aplicação
-dependerá da configuração do servidor, prevista na próxima etapa.
+A geração do WAR valida o empacotamento. Para executar a aplicação com
+WildFly e Oracle configurados, siga a seção de execução local com Docker.
 
 ## Etapas de desenvolvimento
 
@@ -166,9 +183,34 @@ por Docker: a compilação ocorre dentro da imagem de build.
 
 ### Iniciar a aplicação
 
-Na raiz do projeto, execute:
+Na primeira execução, na raiz do projeto, use o PowerShell:
 
-    docker compose up --build -d
+```powershell
+Copy-Item .env.example .env
+docker compose up --build -d
+```
+
+No Linux/macOS, substitua a primeira linha por `cp .env.example .env`.
+O `.env.example` contém valores de exemplo para desenvolvimento local.
+O `.env` é ignorado pelo Git. Se ele já existir, preserve sua configuração e
+execute apenas `docker compose up --build -d`.
+
+Em um volume Oracle novo, a inicialização ocorre automaticamente:
+
+1. O contêiner inicializa o banco e cria o usuário `prontus` em `FREEPDB1`.
+2. Executa `docker/oracle/00-inicializar.sql`.
+3. Esse script chama `01-schema.sql`, que cria `SEQ_PACIENTE` e `PACIENTE`,
+   e `02-procedure-idade.sql`, que cria `P_PATIENT_AGE` e verifica sua validade.
+4. A aplicação aguarda o Oracle ficar saudável antes de iniciar.
+
+O arquivo `teste-idade.sql` é um teste manual e não executa automaticamente.
+A criação do banco do zero foi validada pela suíte de integração Oracle.
+A primeira inicialização pode levar alguns minutos; o início do contêiner
+não significa que o WildFly já concluiu a publicação da aplicação.
+
+Com um volume existente, os dados são preservados e os scripts de inicialização
+não são executados novamente. Alterações posteriores no esquema ou na procedure
+precisam ser aplicadas ao banco existente; reconstruir a imagem não as aplica.
 
 Acesse:
 
@@ -205,12 +247,12 @@ As dependências utilizadas mantêm suas respectivas licenças.
 A aplicação utiliza JPA com Hibernate, com a unidade de persistência
 prontusPU e o datasource ProntusDS gerenciado pelo WildFly.
 
-No ambiente local, o H2 funciona em modo Oracle e armazena os dados
-no volume Docker prontus-dados.
+A aplicação utiliza Oracle no contêiner gvenzl/oracle-free:23-slim e armazena
+os dados no volume Docker oracle-dados. O datasource conecta ao serviço FREEPDB1.
 
-O script docker/h2/init.sql cria a tabela PACIENTE e a sequência
-SEQ_PACIENTE quando ainda não existem. Ele não realiza migrações
-de estruturas existentes.
+O H2 permanece nos testes da suíte padrão. O volume prontus-dados é legado
+da configuração anterior; seus registros não são transferidos automaticamente
+para o Oracle. Os scripts Oracle são descritos na seção de execução local.
 
 ### Convenções
 
@@ -257,17 +299,19 @@ momentos diferentes quando há alterações concorrentes.
 
 - Projeto Maven com Java 17, Jakarta EE 10 e PrimeFaces 14.
 - Aplicação executando no WildFly pelo Docker Compose.
-- Página inicial JSF com componente PrimeFaces.
+- Interface JSF/PrimeFaces com cadastro, listagem paginada e edição.
 - Modelo de domínio Paciente com regras de validação.
-- Persistência JPA com H2 em modo Oracle e volume Docker.
+- Persistência JPA com Oracle e volume Docker.
 - Preenchimento automático das datas de cadastro e atualização.
 - Casos de uso para cadastrar, atualizar, buscar e listar pacientes.
 - Tratamento específico de paciente não encontrado.
-- Testes de domínio, casos de uso e integração da persistência.
+- Cálculo de idade pela procedure Oracle, com exibição em Dialog.
+- Gráficos por faixa etária e relatório PDF com JasperReports.
+- Testes de domínio, casos de uso, apresentação e integração H2/Oracle.
 - Licença MIT.
 
 
-### Testes de integracao Oracle
+### Testes de integração Oracle
 
 Requer Docker Compose. O ambiente abaixo usa um banco separado, sem portas
 publicadas e sem acesso ao volume da aplicacao. As senhas desse Compose sao
@@ -290,3 +334,33 @@ validacao deterministica de aniversarios. Quando omitido, utiliza a data atual
 em America/Sao_Paulo. A aplicacao continua chamando os dois parametros originais.
 Em bancos ja existentes, reaplique docker/oracle/02-procedure-idade.sql para
 disponibilizar esse parametro; os scripts de inicializacao rodam apenas em bancos novos.
+## Roteiro de avaliação
+
+1. Copie `.env.example` para `.env` e execute `docker compose up --build -d`.
+2. Aguarde a publicação de `prontus.war` nos logs e abra http://localhost:8080/prontus/.
+3. Cadastre registros, consulte por nome e intervalo de nascimento e edite pela listagem.
+4. Com mais de 10 registros, navegue entre as páginas; o total é a quantidade de
+   registros encontrados, não o maior código da sequência.
+5. Clique na calculadora para consultar a idade retornada pela procedure Oracle.
+6. Baixe o PDF: ele inclui todos os registros da consulta, independentemente da
+   página aberta. O botão aparece quando há registros.
+7. Abra os gráficos: os indicadores consideram todos os pacientes, sem filtros.
+8. Execute o ambiente de testes Oracle descrito acima para validar as duas suítes.
+
+O banco novo começa sem pacientes. Os testes usam dados próprios em um ambiente
+isolado. A aplicação não possui autenticação nesta entrega.
+
+## Diagnóstico de inicialização
+
+```powershell
+docker compose ps
+docker compose logs --tail 100 oracle
+docker compose logs --tail 100 prontus
+```
+
+Aguarde o Oracle ficar `healthy` e o WildFly registrar `Deployed "prontus.war"`.
+Se faltar uma variável obrigatória, confira o `.env` na raiz do projeto.
+Alterar a senha no `.env` não altera a senha de um usuário em um volume Oracle
+já inicializado: mantenha os valores correspondentes ao banco existente.
+`docker compose down` preserva os dados; `docker compose down -v` remove os
+volumes e seus dados, portanto não deve ser usado para uma reinicialização comum.

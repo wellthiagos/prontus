@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    name: Testes Java e Oracle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Executar as duas suites em banco novo
+        run: docker compose -p prontus-oracle-it -f compose.oracle-it.yaml up --abort-on-container-exit --exit-code-from testes
+      - name: Coletar logs
+        if: always()
+        run: docker compose -p prontus-oracle-it -f compose.oracle-it.yaml logs --no-color > oracle-it.log
+      - name: Disponibilizar resultados dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-testes
+          path: |
+            target/surefire-reports/
+            target/failsafe-reports/
+            oracle-it.log
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Remover ambiente de testes
+        if: always()
+        run: docker compose -p prontus-oracle-it -f compose.oracle-it.yaml down -v
+
+  docker:
+    name: Build da imagem Docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validar configuracao de primeira execucao
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
+          docker compose -p prontus-oracle-it -f compose.oracle-it.yaml config --quiet
+      - name: Construir imagem com o Dockerfile do projeto
+        run: docker build --tag prontus:ci .
